@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { ContactSubmissionModel } from "@/models/ContactSubmission";
 import { verifyCsrfOrigin, checkRateLimit } from "@/lib/auth";
 import { sanitizeCommentContent } from "@/lib/comments";
+import { sendContactNotificationEmail } from "@/lib/mail";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -130,6 +131,18 @@ export async function POST(request: NextRequest) {
       subject: cleanSubject,
       message: cleanMessage,
       status: "unread",
+    });
+
+    // 7. Dispatch email notification to rishabhloomba860@gmail.com
+    // Handled safely so contact submission success is never affected if mailer is not yet configured
+    sendContactNotificationEmail({
+      name: cleanName,
+      email: cleanEmail,
+      subject: cleanSubject,
+      message: cleanMessage,
+      submittedAt: new Date(),
+    }).catch((mailErr) => {
+      console.warn("[Contact API] Mail notification skipped or failed:", mailErr);
     });
 
     return NextResponse.json({
