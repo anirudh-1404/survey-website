@@ -127,9 +127,6 @@ export function Navbar() {
             </span>
             <span className="tracking-widest">PULSE</span>
           </Link>
-          <span className="hidden rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase sm:inline-block">
-            Public Opinion
-          </span>
         </div>
 
         {/* Desktop Navigation */}
