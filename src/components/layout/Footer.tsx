@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Shield, FileText, Info, Scale } from "lucide-react";
+import { PulseIcon } from "@/components/layout/PulseIcon";
 
 export function Footer() {
   const currentYear = 2026;
@@ -10,10 +11,8 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:gap-12">
           {/* Brand and Mission */}
           <div className="space-y-4 md:col-span-2">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-rose-600 font-mono text-xs font-black text-white">
-                P
-              </span>
+            <div className="flex items-center gap-2.5">
+              <PulseIcon className="h-6 w-6" />
               <span className="text-lg font-bold tracking-widest text-white">
                 PULSE
               </span>

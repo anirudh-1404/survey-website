@@ -13,6 +13,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { getSafeRedirectUrl } from "@/lib/url";
+import { PulseIcon } from "@/components/layout/PulseIcon";
 
 function LoginForm() {
   const router = useRouter();
@@ -267,12 +268,10 @@ export default function LoginPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 text-lg font-bold tracking-wider text-white"
+            className="flex items-center gap-2.5 text-lg font-bold tracking-wider text-white"
             aria-label="PULSE Homepage"
           >
-            <span className="flex h-6 w-6 items-center justify-center rounded bg-rose-600 font-mono text-xs font-black text-white">
-              P
-            </span>
+            <PulseIcon className="h-6 w-6" />
             <span className="tracking-widest">PULSE</span>
           </Link>
 

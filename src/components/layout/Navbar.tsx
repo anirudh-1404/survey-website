@@ -12,6 +12,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { UserSafeResponse } from "@/models/User";
+import { PulseIcon } from "@/components/layout/PulseIcon";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -119,12 +120,10 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xl font-bold tracking-wider text-white transition-opacity hover:opacity-90"
+            className="flex items-center gap-2.5 text-xl font-bold tracking-wider text-white transition-opacity hover:opacity-90"
             aria-label="PULSE Homepage"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded bg-rose-600 font-mono text-xs font-black tracking-normal text-white">
-              P
-            </span>
+            <PulseIcon className="h-7 w-7" />
             <span className="tracking-widest">PULSE</span>
           </Link>
         </div>
