@@ -120,10 +120,10 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="flex items-center gap-2.5 text-xl font-bold tracking-wider text-white transition-opacity hover:opacity-90"
+            className="flex items-center gap-2.5 text-xl font-extrabold tracking-widest text-white transition-opacity hover:opacity-90"
             aria-label="PULSE Homepage"
           >
-            <PulseIcon className="h-7 w-7" />
+            <PulseIcon className="h-8 w-8" />
             <span className="tracking-widest">PULSE</span>
           </Link>
         </div>

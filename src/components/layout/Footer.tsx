@@ -12,8 +12,8 @@ export function Footer() {
           {/* Brand and Mission */}
           <div className="space-y-4 md:col-span-2">
             <div className="flex items-center gap-2.5">
-              <PulseIcon className="h-6 w-6" />
-              <span className="text-lg font-bold tracking-widest text-white">
+              <PulseIcon className="h-7 w-7" />
+              <span className="text-lg font-extrabold tracking-widest text-white">
                 PULSE
               </span>
             </div>
