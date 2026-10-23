@@ -16,6 +16,7 @@ import {
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
 import { generateSlug } from "@/lib/blog-utils";
+import { toast } from "sonner";
 
 const CATEGORIES = [
   "Analysis",
@@ -109,12 +110,21 @@ export default function AdminNewBlogPage() {
       const data = await res.json();
 
       if (res.ok && data.success && data.data?.blog) {
+        toast.success(
+          targetStatus === "published"
+            ? "Article published successfully!"
+            : "Article draft saved successfully!"
+        );
         router.push("/admin/blogs");
       } else {
-        setErrorMessage(data.error || "Failed to create article.");
+        const blogErr = data.error || "Failed to create article.";
+        setErrorMessage(blogErr);
+        toast.error(blogErr);
       }
     } catch {
-      setErrorMessage("Network error while submitting article.");
+      const netBlogErr = "Network error while submitting article.";
+      setErrorMessage(netBlogErr);
+      toast.error(netBlogErr);
     } finally {
       setIsSubmitting(false);
     }

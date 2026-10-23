@@ -14,6 +14,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { PulseIcon } from "@/components/layout/PulseIcon";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -93,7 +94,9 @@ export default function RegisterPage() {
         if (data.errors) {
           setFieldErrors(data.errors);
         }
-        setServerError(data.error || "Registration could not be completed.");
+        const errorMsg = data.error || "Registration could not be completed.";
+        setServerError(errorMsg);
+        toast.error(errorMsg);
         setIsSubmitting(false);
         return;
       }
@@ -101,6 +104,7 @@ export default function RegisterPage() {
       setSuccessNotice(
         "Account created successfully. Establishing authenticated session..."
       );
+      toast.success("Account created successfully! Welcome to PULSE.");
 
       // Smooth redirection to homepage with session active
       setTimeout(() => {
@@ -108,7 +112,9 @@ export default function RegisterPage() {
         router.refresh();
       }, 600);
     } catch {
-      setServerError("A network error occurred while communicating with the server.");
+      const netError = "A network error occurred while communicating with the server.";
+      setServerError(netError);
+      toast.error(netError);
       setIsSubmitting(false);
     }
   };

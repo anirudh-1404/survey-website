@@ -18,6 +18,7 @@ import {
   Filter,
 } from "lucide-react";
 import { ContactSubmission, ContactSubmissionStatus } from "@/types/contact";
+import { toast } from "sonner";
 
 export default function AdminContactSubmissionsPage() {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
@@ -156,23 +157,29 @@ export default function AdminContactSubmissionsPage() {
         if (selectedSubmission?.id === id) {
           setSelectedSubmission(updated);
         }
+        const statusMsg = `Submission marked as ${newStatus}.`;
         setFeedback({
           type: "success",
-          message: `Submission marked as ${newStatus}.`,
+          message: statusMsg,
         });
+        toast.success(statusMsg);
         // Refresh counts
         fetchSubmissions();
       } else {
+        const statusErr = data.error || "Failed to update submission status.";
         setFeedback({
           type: "error",
-          message: data.error || "Failed to update submission status.",
+          message: statusErr,
         });
+        toast.error(statusErr);
       }
     } catch {
+      const netSubErr = "Network error while updating submission.";
       setFeedback({
         type: "error",
-        message: "Network error while updating submission.",
+        message: netSubErr,
       });
+      toast.error(netSubErr);
     } finally {
       setActionInProgress(null);
     }

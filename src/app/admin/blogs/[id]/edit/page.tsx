@@ -20,6 +20,7 @@ import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
 import { generateSlug } from "@/lib/blog-utils";
 import { BlogPost, BlogStatus } from "@/types/blog";
+import { toast } from "sonner";
 
 const CATEGORIES = [
   "Analysis",
@@ -161,13 +162,19 @@ export default function AdminEditBlogPage({ params }: EditBlogPageProps) {
 
       if (res.ok && data.success && data.data?.blog) {
         setStatus(data.data.blog.status);
-        setSuccessMessage("Article changes securely saved.");
+        const savedMsg = "Article changes securely saved.";
+        setSuccessMessage(savedMsg);
+        toast.success(savedMsg);
         router.refresh();
       } else {
-        setErrorMessage(data.error || "Failed to save article changes.");
+        const editBlogErr = data.error || "Failed to save article changes.";
+        setErrorMessage(editBlogErr);
+        toast.error(editBlogErr);
       }
     } catch {
-      setErrorMessage("Network error occurred while saving article.");
+      const netEditErr = "Network error occurred while saving article.";
+      setErrorMessage(netEditErr);
+      toast.error(netEditErr);
     } finally {
       setIsSubmitting(false);
     }

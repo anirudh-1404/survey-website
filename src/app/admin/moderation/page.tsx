@@ -11,6 +11,7 @@ import {
   RefreshCw,
   ExternalLink,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ModerationItem {
   commentId: string;
@@ -128,10 +129,12 @@ export default function AdminModerationPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        const msg = data.data.message || `Comment successfully ${action}d.`;
         setFeedback({
           type: "success",
-          message: data.data.message || `Comment successfully ${action}d.`,
+          message: msg,
         });
+        toast.success(msg);
         // Update local items state
         setItems((prev) =>
           prev.map((item) =>
@@ -141,16 +144,20 @@ export default function AdminModerationPage() {
           )
         );
       } else {
+        const errMsg = data.error || "Failed to update comment status.";
         setFeedback({
           type: "error",
-          message: data.error || "Failed to update comment status.",
+          message: errMsg,
         });
+        toast.error(errMsg);
       }
     } catch {
+      const netErr = "Network error occurred while applying moderation.";
       setFeedback({
         type: "error",
-        message: "Network error occurred while applying moderation.",
+        message: netErr,
       });
+      toast.error(netErr);
     } finally {
       setActionInProgress(null);
     }

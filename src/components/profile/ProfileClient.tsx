@@ -14,6 +14,7 @@ import {
   Loader2,
   Save,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProfileClientProps {
   user: UserSafeResponse;
@@ -68,10 +69,12 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
 
       const data = await res.json();
       if (!res.ok) {
+        const nameErr = data.error || "Failed to update display name.";
         setNameFeedback({
           type: "error",
-          message: data.error || "Failed to update display name.",
+          message: nameErr,
         });
+        toast.error(nameErr);
         setIsSavingName(false);
         return;
       }
@@ -82,11 +85,14 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
         type: "success",
         message: "Your display name has been updated.",
       });
+      toast.success("Display name updated successfully!");
     } catch {
+      const netErr = "A network error occurred while updating your display name.";
       setNameFeedback({
         type: "error",
-        message: "A network error occurred while updating your display name.",
+        message: netErr,
       });
+      toast.error(netErr);
     } finally {
       setIsSavingName(false);
     }
@@ -110,6 +116,7 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
 
     if (Object.keys(errs).length > 0) {
       setPasswordErrors(errs);
+      toast.error("Please resolve the password validation errors.");
       return;
     }
 
@@ -131,10 +138,12 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
         if (data.errors) {
           setPasswordErrors(data.errors);
         }
+        const pwErr = data.error || "Failed to update password.";
         setPasswordFeedback({
           type: "error",
-          message: data.error || "Failed to update password.",
+          message: pwErr,
         });
+        toast.error(pwErr);
         setIsSavingPassword(false);
         return;
       }
@@ -144,14 +153,17 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
         message:
           "Your password has been successfully updated. All other active sessions have been invalidated.",
       });
+      toast.success("Password updated successfully!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch {
+      const netPwErr = "A network error occurred while updating your password.";
       setPasswordFeedback({
         type: "error",
-        message: "A network error occurred while updating your password.",
+        message: netPwErr,
       });
+      toast.error(netPwErr);
     } finally {
       setIsSavingPassword(false);
     }

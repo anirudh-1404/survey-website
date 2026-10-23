@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { getSafeRedirectUrl } from "@/lib/url";
 import { PulseIcon } from "@/components/layout/PulseIcon";
+import { toast } from "sonner";
 
 function LoginForm() {
   const router = useRouter();
@@ -65,12 +66,15 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setServerError(data.error || "Authentication failed. Please verify your credentials.");
+        const errorMsg = data.error || "Authentication failed. Please verify your credentials.";
+        setServerError(errorMsg);
+        toast.error(errorMsg);
         setIsSubmitting(false);
         return;
       }
 
       setSuccessNotice("Authentication successful. Redirecting to your workspace...");
+      toast.success("Signed in successfully. Welcome back!");
 
       // Small delay for UI smoothness before redirect
       setTimeout(() => {
@@ -78,7 +82,9 @@ function LoginForm() {
         router.refresh();
       }, 500);
     } catch {
-      setServerError("A network error occurred while communicating with the server.");
+      const netError = "A network error occurred while communicating with the server.";
+      setServerError(netError);
+      toast.error(netError);
       setIsSubmitting(false);
     }
   };

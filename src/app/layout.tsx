@@ -64,6 +64,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+import { Toaster } from "sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,6 +78,19 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#090a0f] text-[#f4f4f7] selection:bg-rose-900 selection:text-white">
         {children}
+        <Toaster
+          position="top-right"
+          theme="dark"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              background: "#12141c",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              color: "#f4f4f7",
+            },
+          }}
+        />
       </body>
     </html>
   );

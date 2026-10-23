@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   RotateCcw,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export function ContactForm() {
   const [name, setName] = useState("");
@@ -101,16 +102,19 @@ export function ContactForm() {
         setMessage("");
         setHoneypot("");
         setFieldErrors({});
+        toast.success("Thank you! Your message has been sent to our editorial team.");
       } else {
-        setErrorMessage(
+        const err =
           data.error ||
-            "Unable to submit your inquiry at this moment. Please try again."
-        );
+          "Unable to submit your inquiry at this moment. Please try again.";
+        setErrorMessage(err);
+        toast.error(err);
       }
     } catch {
-      setErrorMessage(
-        "A network communication error occurred. Please verify your connection and try again."
-      );
+      const netErr =
+        "A network communication error occurred. Please verify your connection and try again.";
+      setErrorMessage(netErr);
+      toast.error(netErr);
     } finally {
       setIsSubmitting(false);
     }

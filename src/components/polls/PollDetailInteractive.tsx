@@ -26,6 +26,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { PollImage } from "@/components/polls/PollImage";
+import { toast } from "sonner";
 
 interface PollDetailInteractiveProps {
   poll: Poll;
@@ -123,35 +124,30 @@ export function PollDetailInteractive({
   const handleCastVote = async (optionKeyInput?: string) => {
     const targetKey = optionKeyInput || selectedOption;
     if (!targetKey) {
-      setFeedback({
-        type: "error",
-        message: "Please select an answer choice before casting your ballot.",
-      });
+      const msg = "Please select an answer choice before casting your ballot.";
+      setFeedback({ type: "error", message: msg });
+      toast.error(msg);
       return;
     }
 
     if (!isAuthenticated) {
-      setFeedback({
-        type: "info",
-        message:
-          "Authentication required: Please sign in to verify your identity and cast your ballot.",
-      });
+      const msg = "Authentication required: Please sign in to verify your identity and cast your ballot.";
+      setFeedback({ type: "info", message: msg });
+      toast.error(msg);
       return;
     }
 
     if (isClosed) {
-      setFeedback({
-        type: "error",
-        message: "This public inquiry is closed for balloting.",
-      });
+      const msg = "This public inquiry is closed for balloting.";
+      setFeedback({ type: "error", message: msg });
+      toast.error(msg);
       return;
     }
 
     if (hasVoted) {
-      setFeedback({
-        type: "info",
-        message: "You have already cast your ballot on this inquiry.",
-      });
+      const msg = "You have already cast your ballot on this inquiry.";
+      setFeedback({ type: "info", message: msg });
+      toast.info(msg);
       return;
     }
 
@@ -196,31 +192,34 @@ export function PollDetailInteractive({
           );
         }
 
+        const successMsg = data.data?.message || `Your ballot for ${cleanKey.toUpperCase()} has been securely registered!`;
         setFeedback({
           type: "success",
-          message:
-            data.data?.message ||
-            "Your ballot has been securely registered and tallied.",
+          message: successMsg,
         });
+        toast.success(successMsg);
       } else if (response.status === 409) {
         setHasVoted(true);
+        const conflictMsg = data.error || "You have already cast your ballot on this inquiry.";
         setFeedback({
           type: "error",
-          message:
-            data.error || "You have already cast your ballot on this inquiry.",
+          message: conflictMsg,
         });
+        toast.info(conflictMsg);
       } else if (response.status === 401) {
+        const authMsg = "Your session has expired. Please log in again to vote.";
         setFeedback({
           type: "error",
-          message: "Your session has expired. Please log in again to vote.",
+          message: authMsg,
         });
+        toast.error(authMsg);
       } else {
+        const failMsg = data.error || "Unable to cast ballot. Please check your connection and try again.";
         setFeedback({
           type: "error",
-          message:
-            data.error ||
-            "Unable to cast ballot. Please check your connection and try again.",
+          message: failMsg,
         });
+        toast.error(failMsg);
       }
     } catch {
       setFeedback({
@@ -280,29 +279,34 @@ export function PollDetailInteractive({
         setLikesState((prev) => ({ ...prev, [newComment.id]: 0 }));
         setLikedByMeState((prev) => ({ ...prev, [newComment.id]: false }));
         setCommentDraft("");
+        const successMsg = data.data.message || "Your perspective has been verified and posted!";
         setDiscussionFeedback({
           type: "success",
-          message:
-            data.data.message ||
-            "Your perspective has been verified and posted to the community feed.",
+          message: successMsg,
         });
+        toast.success(successMsg);
       } else if (response.status === 429) {
+        const rateMsg = "Discussion rate limit reached. Please wait a moment before posting another argument.";
         setDiscussionFeedback({
           type: "error",
-          message:
-            "Discussion rate limit reached. Please wait a moment before posting another argument.",
+          message: rateMsg,
         });
+        toast.error(rateMsg);
       } else {
+        const failMsg = data.error || "Failed to publish comment.";
         setDiscussionFeedback({
           type: "error",
-          message: data.error || "Failed to publish comment.",
+          message: failMsg,
         });
+        toast.error(failMsg);
       }
     } catch {
+      const netMsg = "Network error while submitting perspective.";
       setDiscussionFeedback({
         type: "error",
-        message: "Network error while submitting perspective.",
+        message: netMsg,
       });
+      toast.error(netMsg);
     } finally {
       setIsPostingComment(false);
     }
@@ -313,10 +317,12 @@ export function PollDetailInteractive({
     if (!replyDraft.trim()) return;
 
     if (!isAuthenticated) {
+      const authMsg = "Please sign in to reply to this citizen perspective.";
       setDiscussionFeedback({
         type: "info",
-        message: "Please sign in to reply to this citizen perspective.",
+        message: authMsg,
       });
+      toast.error(authMsg);
       return;
     }
 
@@ -365,17 +371,22 @@ export function PollDetailInteractive({
           type: "success",
           message: "Your counter-argument or reply has been posted.",
         });
+        toast.success("Your reply has been posted!");
       } else {
+        const replyErr = data.error || "Failed to post reply.";
         setDiscussionFeedback({
           type: "error",
-          message: data.error || "Failed to post reply.",
+          message: replyErr,
         });
+        toast.error(replyErr);
       }
     } catch {
+      const netErr = "Network error while submitting reply.";
       setDiscussionFeedback({
         type: "error",
-        message: "Network error while submitting reply.",
+        message: netErr,
       });
+      toast.error(netErr);
     } finally {
       setIsPostingReply(false);
     }
@@ -384,10 +395,12 @@ export function PollDetailInteractive({
   // --- Report Submission Handler ---
   const handleReportSubmit = async (commentId: string) => {
     if (!isAuthenticated) {
+      const authReportMsg = "Please sign in to report a comment to the editorial board.";
       setDiscussionFeedback({
         type: "info",
-        message: "Please sign in to report a comment to the editorial board.",
+        message: authReportMsg,
       });
+      toast.error(authReportMsg);
       return;
     }
 
@@ -411,21 +424,27 @@ export function PollDetailInteractive({
       if (response.ok && data.success) {
         setReportingCommentId(null);
         setReportDetails("");
+        const repSuccess = data.data.message || "Thank you. The perspective has been flagged for moderation review.";
         setDiscussionFeedback({
           type: "success",
-          message: data.data.message || "Thank you. The perspective has been flagged for moderation review.",
+          message: repSuccess,
         });
+        toast.success(repSuccess);
       } else {
+        const repErr = data.error || "Failed to submit report.";
         setDiscussionFeedback({
           type: "error",
-          message: data.error || "Failed to submit report.",
+          message: repErr,
         });
+        toast.error(repErr);
       }
     } catch {
+      const netRepErr = "Network error while submitting moderation report.";
       setDiscussionFeedback({
         type: "error",
-        message: "Network error while submitting moderation report.",
+        message: netRepErr,
       });
+      toast.error(netRepErr);
     } finally {
       setIsSubmittingReport(false);
     }
@@ -437,10 +456,12 @@ export function PollDetailInteractive({
     initialIsLiked = false
   ) => {
     if (!isAuthenticated || !currentUser) {
+      const likeAuthMsg = "Please sign in to like perspectives and take part in the discussion.";
       setDiscussionFeedback({
         type: "error",
-        message: "Please sign in to like perspectives and take part in the discussion.",
+        message: likeAuthMsg,
       });
+      toast.error(likeAuthMsg);
       return;
     }
 
@@ -459,6 +480,12 @@ export function PollDetailInteractive({
     setLikedByMeState((prev) => ({ ...prev, [id]: nextLiked }));
     setLikesState((prev) => ({ ...prev, [id]: nextCount }));
     setPendingLikes((prev) => ({ ...prev, [id]: true }));
+
+    if (nextLiked) {
+      toast.success("Perspective liked");
+    } else {
+      toast.info("Like removed");
+    }
 
     try {
       const response = await fetch(`/api/comments/${id}/like`, {
@@ -504,13 +531,15 @@ export function PollDetailInteractive({
       // Rollback on failure
       setLikedByMeState((prev) => ({ ...prev, [id]: wasLiked }));
       setLikesState((prev) => ({ ...prev, [id]: currentCount }));
+      const likeErrMsg =
+        err instanceof Error
+          ? err.message
+          : "Network error while updating like.";
       setDiscussionFeedback({
         type: "error",
-        message:
-          err instanceof Error
-            ? err.message
-            : "Network error while updating like.",
+        message: likeErrMsg,
       });
+      toast.error(likeErrMsg);
     } finally {
       setPendingLikes((prev) => {
         const copy = { ...prev };
@@ -524,6 +553,7 @@ export function PollDetailInteractive({
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
+      toast.success("Poll link copied to clipboard!");
       setTimeout(() => setCopiedLink(false), 2500);
     }
   };

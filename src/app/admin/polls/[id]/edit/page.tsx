@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PollCategory } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
+import { toast } from "sonner";
 
 interface EditPollPageProps {
   params: Promise<{ id: string }>;
@@ -142,16 +143,22 @@ export default function EditPollPage({ params }: EditPollPageProps) {
 
       const data = await res.json();
       if (!res.ok) {
-        setFeedback({ type: "error", message: data.error || "Failed to persist poll updates." });
+        const updateErr = data.error || "Failed to persist poll updates.";
+        setFeedback({ type: "error", message: updateErr });
+        toast.error(updateErr);
         setIsSubmitting(false);
         return;
       }
 
-      setFeedback({ type: "success", message: "Inquiry successfully updated and saved to MongoDB." });
+      const updateMsg = "Inquiry successfully updated and saved to MongoDB.";
+      setFeedback({ type: "success", message: updateMsg });
+      toast.success(updateMsg);
       setIsSubmitting(false);
       router.refresh();
     } catch {
-      setFeedback({ type: "error", message: "Network error occurred while communicating with server." });
+      const netUpdateErr = "Network error occurred while communicating with server.";
+      setFeedback({ type: "error", message: netUpdateErr });
+      toast.error(netUpdateErr);
       setIsSubmitting(false);
     }
   };

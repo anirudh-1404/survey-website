@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PollCategory } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
+import { toast } from "sonner";
 
 export default function CreatePollPage() {
   const router = useRouter();
@@ -101,31 +102,38 @@ export default function CreatePollPage() {
       const data = await res.json();
       if (!res.ok) {
         if (data.errors) setErrors(data.errors);
+        const pollErr = data.error || "Failed to save poll to database.";
         setFeedback({
           type: "error",
-          message: data.error || "Failed to save poll to database.",
+          message: pollErr,
         });
+        toast.error(pollErr);
         setIsSubmitting(false);
         return;
       }
 
+      const pollSuccessMsg =
+        targetStatus === "published"
+          ? "Poll inquiry successfully published to the live public feed!"
+          : "Poll successfully saved as a draft in MongoDB.";
+
       setFeedback({
         type: "success",
-        message:
-          targetStatus === "published"
-            ? "Poll inquiry successfully published to the live public feed!"
-            : "Poll successfully saved as a draft in MongoDB.",
+        message: pollSuccessMsg,
       });
+      toast.success(pollSuccessMsg);
 
       setTimeout(() => {
         router.push("/admin/polls");
         router.refresh();
       }, 700);
     } catch {
+      const netPollErr = "A network error occurred while communicating with the server.";
       setFeedback({
         type: "error",
-        message: "A network error occurred while communicating with the server.",
+        message: netPollErr,
       });
+      toast.error(netPollErr);
       setIsSubmitting(false);
     }
   };

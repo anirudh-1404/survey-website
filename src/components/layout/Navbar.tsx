@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { UserSafeResponse } from "@/models/User";
 import { PulseIcon } from "@/components/layout/PulseIcon";
+import { toast } from "sonner";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -89,9 +90,11 @@ export function Navbar() {
       setCurrentUser(null);
       setUserDropdownOpen(false);
       setMobileMenuOpen(false);
+      toast.success("Logged out successfully.");
       router.push("/");
       router.refresh();
     } catch {
+      toast.error("Logout encountered an issue, redirecting...");
       router.push("/");
     }
   };
