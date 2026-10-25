@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Poll, PollOption } from "@/types/poll";
+import { Poll, PollOption, PollComment } from "@/types/poll";
 import {
   Check,
   Info,
@@ -26,7 +26,7 @@ import { PollChat } from "@/components/chat/PollChat";
 
 interface PollDetailInteractiveProps {
   poll: Poll;
-  initialComments: PollComment[];
+  initialComments?: PollComment[];
   isAuthenticated?: boolean;
   initialHasVoted?: boolean;
   initialUserVote?: string;
