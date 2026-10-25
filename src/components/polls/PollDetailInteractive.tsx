@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Poll, PollOption, PollComment } from "@/types/poll";
 import {
@@ -46,6 +46,11 @@ export function PollDetailInteractive({
   isClosed = false,
   currentUser,
 }: PollDetailInteractiveProps) {
+  // Ensure the page always starts at the top when opened
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
+
   // --- Voting State ---
   const [hasVoted, setHasVoted] = useState(initialHasVoted);
   const [userVote, setUserVote] = useState<string | null>(initialUserVote || null);

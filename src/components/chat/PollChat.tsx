@@ -67,12 +67,17 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
   const [activeReactionMessageId, setActiveReactionMessageId] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // Auto-scroll to bottom of messages container
+  // Auto-scroll inside chat feed without scrolling the main window/page
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
-    messagesEndRef.current?.scrollIntoView({ behavior });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
   }, []);
 
   // 1. Fetch Chat History asynchronously on mount / pollId change
@@ -361,7 +366,10 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
       </div>
 
       {/* Message Feed Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+      >
         {isLoadingHistory ? (
           <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-2">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
@@ -541,7 +549,6 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Chat Input & Authentication Controls */}
