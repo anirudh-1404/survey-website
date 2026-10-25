@@ -234,7 +234,7 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
                   href={`/polls/${poll.id}`}
                   className="inline-flex items-center gap-1.5 font-semibold text-rose-400 hover:text-rose-300 transition-colors"
                 >
-                  <span>Full Poll & Citizen Comments</span>
+                  <span>Full Poll & Live Citizen Chat</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
@@ -348,19 +348,19 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
                 )}
 
                 {isAuthenticated === false && !hasVoted && (
-                  <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] p-3 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-xs">
                     <span className="text-zinc-400">Sign in to participate:</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Link
                         href={`/login?redirect=${encodeURIComponent("/")}`}
-                        className="inline-flex items-center gap-1 rounded bg-rose-600 px-2.5 py-1 font-semibold text-white hover:bg-rose-500 transition-colors"
+                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded bg-rose-600 px-3 py-1.5 font-semibold text-white hover:bg-rose-500 transition-colors"
                       >
-                        <LogIn className="h-3 w-3" />
-                        <span>Log In</span>
+                        <LogIn className="h-3 w-3 shrink-0" />
+                        <span className="whitespace-nowrap">Log In</span>
                       </Link>
                       <Link
                         href="/register"
-                        className="rounded border border-white/15 px-2.5 py-1 font-medium text-zinc-300 hover:text-white transition-colors"
+                        className="whitespace-nowrap rounded border border-white/15 px-3 py-1.5 font-medium text-zinc-300 hover:text-white transition-colors"
                       >
                         Register
                       </Link>

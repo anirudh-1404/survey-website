@@ -2,15 +2,41 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export type ChatMessageStatus = "visible" | "hidden" | "removed";
 
+export interface IChatReaction {
+  emoji: string;
+  users: mongoose.Types.ObjectId[];
+}
+
 export interface IChatMessage extends Document {
   _id: mongoose.Types.ObjectId;
   pollId: mongoose.Types.ObjectId;
   authorId: mongoose.Types.ObjectId;
   content: string;
   status: ChatMessageStatus;
+  reactions: IChatReaction[];
+  isFlagged: boolean;
+  flagReason?: string;
+  flaggedWords?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const ChatReactionSchema = new Schema<IChatReaction>(
+  {
+    emoji: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    users: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+  },
+  { _id: false }
+);
 
 const ChatMessageSchema = new Schema<IChatMessage>(
   {
@@ -42,6 +68,23 @@ const ChatMessageSchema = new Schema<IChatMessage>(
       default: "visible",
       index: true,
     },
+    reactions: {
+      type: [ChatReactionSchema],
+      default: [],
+    },
+    isFlagged: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    flagReason: {
+      type: String,
+      default: undefined,
+    },
+    flaggedWords: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -52,6 +95,11 @@ const ChatMessageSchema = new Schema<IChatMessage>(
 ChatMessageSchema.index({ pollId: 1, status: 1, createdAt: -1 });
 ChatMessageSchema.index({ pollId: 1, createdAt: -1 });
 ChatMessageSchema.index({ authorId: 1, createdAt: -1 });
+
+// Avoid stale cached model in long-running Next.js development server
+if (process.env.NODE_ENV !== "production" && mongoose.models.ChatMessage) {
+  delete mongoose.models.ChatMessage;
+}
 
 export const ChatMessageModel: Model<IChatMessage> =
   mongoose.models.ChatMessage ||

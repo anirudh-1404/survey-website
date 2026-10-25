@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import { subscribeToPollChat } from "@/lib/chat";
-import { ChatMessage } from "@/types/chat";
 import mongoose from "mongoose";
 
 interface RouteParams {
@@ -61,12 +60,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         )
       );
 
-      // 2. Subscribe to new chat messages for this specific poll
-      unsubscribe = subscribeToPollChat(pollDbId, (msg: ChatMessage) => {
+      // 2. Subscribe to new chat messages and reactions for this specific poll
+      unsubscribe = subscribeToPollChat(pollDbId, (payload) => {
         try {
-          controller.enqueue(
-            encoder.encode(`event: message\ndata: ${JSON.stringify(msg)}\n\n`)
-          );
+          if (payload.type === "new_message") {
+            controller.enqueue(
+              encoder.encode(`event: message\ndata: ${JSON.stringify(payload.message)}\n\n`)
+            );
+          } else if (payload.type === "reaction_update") {
+            controller.enqueue(
+              encoder.encode(`event: reaction\ndata: ${JSON.stringify(payload)}\n\n`)
+            );
+          } else if (payload.type === "message_deleted") {
+            controller.enqueue(
+              encoder.encode(`event: delete\ndata: ${JSON.stringify(payload)}\n\n`)
+            );
+          }
         } catch {
           // Controller might already be closed
         }

@@ -280,7 +280,7 @@ describe("PULSE — UI Cleanup, User Profile, Poll Images & Poll Detail Redesign
   });
 
   // --- Phase 4 & 5: Poll Images, Poll Detail Redesign & Live Chat Removal ---
-  test("8. PollDetailInteractive: Live chat UI is removed completely from user-facing poll page", () => {
+  test("8. PollDetailInteractive: Live chat UI is integrated into user-facing poll page", () => {
     const detailInteractivePath = path.resolve(
       process.cwd(),
       "src/components/polls/PollDetailInteractive.tsx"
@@ -288,16 +288,16 @@ describe("PULSE — UI Cleanup, User Profile, Poll Images & Poll Detail Redesign
     const content = fs.readFileSync(detailInteractivePath, "utf-8");
 
     assert.ok(
-      !content.includes("<PollChat"),
-      "PollDetailInteractive must not render PollChat"
+      content.includes("<PollChat"),
+      "PollDetailInteractive must render PollChat"
     );
     assert.ok(
-      !content.includes('import { PollChat }'),
-      "PollDetailInteractive must not import PollChat"
+      content.includes('import { PollChat }'),
+      "PollDetailInteractive must import PollChat"
     );
     assert.ok(
-      content.includes("Public Discourse & Arguments"),
-      "PollDetailInteractive must preserve the public comments/discussion section"
+      content.includes("Live Citizen Chat & Public Discourse"),
+      "PollDetailInteractive must provide live public discourse chat room"
     );
     assert.ok(
       content.includes("handleCastVote"),

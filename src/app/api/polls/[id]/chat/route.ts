@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth, verifyCsrfOrigin, checkRateLimit } from "@/lib/auth";
+import { requireAuth, getCurrentUser, verifyCsrfOrigin, checkRateLimit } from "@/lib/auth";
 import {
   getPollChatHistory,
   createChatMessage,
+  deleteChatMessage,
   ChatError,
 } from "@/lib/chat";
 
@@ -21,11 +22,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const limitParam = searchParams.get("limit");
     const beforeParam = searchParams.get("before");
+    const session = await getCurrentUser();
 
     const limit = limitParam ? parseInt(limitParam, 10) : 50;
     const history = await getPollChatHistory(id, {
       limit: isNaN(limit) ? 50 : limit,
       before: beforeParam || undefined,
+      currentUserId: session?.user?.id,
     });
 
     if (!history) {
@@ -137,6 +140,91 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const message =
       error instanceof Error ? error.message : "Failed to post message.";
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/polls/[id]/chat
+ * Delete a chat message.
+ * Users can delete their own message; Admin can delete any message.
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+
+    // 1. Verify CSRF
+    if (!verifyCsrfOrigin(request)) {
+      return NextResponse.json(
+        { success: false, error: "Cross-site request rejected." },
+        { status: 403 }
+      );
+    }
+
+    // 2. Authenticate user
+    const session = await requireAuth();
+
+    // 3. Extract message ID from query params or body
+    const { searchParams } = new URL(request.url);
+    let messageId = searchParams.get("messageId");
+
+    if (!messageId) {
+      const body = await request.json().catch(() => null);
+      if (body && typeof body.messageId === "string") {
+        messageId = body.messageId;
+      }
+    }
+
+    if (!messageId) {
+      return NextResponse.json(
+        { success: false, error: "Message ID is required." },
+        { status: 400 }
+      );
+    }
+
+    // 4. Delete message with role-based checks
+    const result = await deleteChatMessage(
+      id,
+      messageId,
+      session.user.id,
+      session.user.role
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof ChatError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "statusCode" in error &&
+      typeof error.statusCode === "number"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Authentication required.",
+        },
+        { status: error.statusCode }
+      );
+    }
+
+    const message =
+      error instanceof Error ? error.message : "Failed to delete message.";
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }
