@@ -10,12 +10,15 @@ import {
   Loader2,
   Image as ImageIcon,
   Video as VideoIcon,
-  Play,
+  Info,
+  Maximize2,
 } from "lucide-react";
+import { AdPlacement, PLACEMENT_SPECS } from "@/types/ad";
 
 interface AdMediaUploaderProps {
   mediaType: "image" | "video";
   mediaUrl: string;
+  placement: AdPlacement;
   cloudinaryPublicId?: string;
   onChange: (data: { mediaUrl: string; cloudinaryPublicId?: string }) => void;
   disabled?: boolean;
@@ -24,9 +27,47 @@ interface AdMediaUploaderProps {
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
+/**
+ * Inspect image or video file dimensions asynchronously
+ */
+function getMediaDimensions(
+  file: File,
+  mediaType: "image" | "video"
+): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+
+    if (mediaType === "video") {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve({ width: video.videoWidth, height: video.videoHeight });
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Unable to read video file dimensions."));
+      };
+      video.src = objectUrl;
+    } else {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Unable to read image file dimensions."));
+      };
+      img.src = objectUrl;
+    }
+  });
+}
+
 export function AdMediaUploader({
   mediaType,
   mediaUrl,
+  placement,
   cloudinaryPublicId,
   onChange,
   disabled = false,
@@ -36,7 +77,13 @@ export function AdMediaUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [detectedDimensions, setDetectedDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const spec = PLACEMENT_SPECS[placement] || PLACEMENT_SPECS.banner_top;
 
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,18 +92,19 @@ export function AdMediaUploader({
     if (fileInputRef.current) fileInputRef.current.value = "";
     setUploadError(null);
     setUploadSuccess(null);
+    setDetectedDimensions(null);
 
-    // Validate type based on mediaType
+    // 1. Validate file mime type
     if (mediaType === "image" && !ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
-      setUploadError("Please upload a valid image (JPEG, PNG, WebP).");
+      setUploadError("Invalid image format. Supported formats: JPEG, PNG, WebP.");
       return;
     }
     if (mediaType === "video" && !ALLOWED_VIDEO_TYPES.includes(file.type.toLowerCase())) {
-      setUploadError("Please upload a valid video file (MP4, WebM, MOV).");
+      setUploadError("Invalid video format. Supported formats: MP4, WebM, MOV.");
       return;
     }
 
-    // Size limit: 5MB for image, 25MB for video
+    // 2. Validate file size (5MB image, 25MB video)
     const maxBytes = mediaType === "video" ? 25 * 1024 * 1024 : 5 * 1024 * 1024;
     if (file.size > maxBytes) {
       setUploadError(
@@ -65,7 +113,32 @@ export function AdMediaUploader({
       return;
     }
 
+    // 3. Strict Aspect Ratio & Dimension Check
     try {
+      const dimensions = await getMediaDimensions(file, mediaType);
+      setDetectedDimensions(dimensions);
+
+      const actualRatio = dimensions.width / dimensions.height;
+      const expectedRatio = spec.aspectRatioValue;
+      const ratioDiff = Math.abs(actualRatio - expectedRatio) / expectedRatio;
+
+      // Minimum resolution validation
+      if (dimensions.width < spec.minWidth || dimensions.height < spec.minHeight) {
+        setUploadError(
+          `Image resolution (${dimensions.width}x${dimensions.height}px) is too small for ${spec.name}. Minimum required: ${spec.minWidth}x${spec.minHeight}px.`
+        );
+        return;
+      }
+
+      // Aspect ratio tolerance validation
+      if (ratioDiff > spec.tolerance) {
+        setUploadError(
+          `Aspect ratio mismatch for ${spec.name}! Detected: ${(actualRatio).toFixed(2)}:1 (${dimensions.width}x${dimensions.height}px). Required ratio is ${spec.ratio} (Recommended: ${spec.recommendedWidth}x${spec.recommendedHeight}px). Please crop or resize your asset.`
+        );
+        return;
+      }
+
+      // 4. Proceed to upload
       setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
@@ -89,10 +162,10 @@ export function AdMediaUploader({
       });
       setUrlInput(data.data.url);
       setUploadSuccess(
-        `${mediaType === "video" ? "Video" : "Image"} uploaded successfully to Cloudinary!`
+        `✓ Validated & Uploaded (${dimensions.width}x${dimensions.height}px) to Cloudinary successfully!`
       );
     } catch (err: unknown) {
-      setUploadError(err instanceof Error ? err.message : "Failed to upload file");
+      setUploadError(err instanceof Error ? err.message : "Failed to process asset.");
     } finally {
       setIsUploading(false);
     }
@@ -118,12 +191,14 @@ export function AdMediaUploader({
     setUrlInput("");
     setUploadError(null);
     setUploadSuccess(null);
+    setDetectedDimensions(null);
     onChange({ mediaUrl: "", cloudinaryPublicId: undefined });
   };
 
   return (
-    <div className="space-y-3 rounded-xl border border-white/10 bg-[#0d0f17] p-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 rounded-xl border border-white/10 bg-[#0d0f17] p-4">
+      {/* Top Header & Mode Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <label className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
           {mediaType === "video" ? (
             <VideoIcon className="h-4 w-4 text-rose-500" />
@@ -162,6 +237,33 @@ export function AdMediaUploader({
         </div>
       </div>
 
+      {/* Required Ratio & Resolution Guidance Badge for Selected Placement */}
+      <div className="rounded-xl border border-rose-500/30 bg-rose-950/20 p-3.5 flex items-start gap-3 text-xs">
+        <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 shrink-0 mt-0.5">
+          <Maximize2 className="h-4 w-4" />
+        </div>
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-bold text-white uppercase tracking-wider text-[11px]">
+              {spec.name} Requirements:
+            </span>
+            <span className="px-2 py-0.5 rounded bg-rose-500/30 border border-rose-500/40 text-rose-200 font-mono font-bold text-[11px]">
+              Ratio {spec.ratio}
+            </span>
+            <span className="px-2 py-0.5 rounded bg-white/10 text-zinc-300 font-mono text-[11px]">
+              Recommended: {spec.recommendedWidth} × {spec.recommendedHeight}px
+            </span>
+            <span className="text-zinc-500 text-[10px]">
+              (Min: {spec.minWidth} × {spec.minHeight}px)
+            </span>
+          </div>
+          <p className="text-[11px] text-zinc-400">
+            {spec.description}. Assets not matching this aspect ratio will be blocked to protect platform aesthetics.
+          </p>
+        </div>
+      </div>
+
+      {/* Upload Box */}
       {mode === "upload" ? (
         <div>
           <input
@@ -182,7 +284,7 @@ export function AdMediaUploader({
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 text-rose-500 animate-spin" />
                 <p className="text-xs text-zinc-300">
-                  Uploading {mediaType} to Cloudinary...
+                  Validating dimensions & uploading {mediaType}...
                 </p>
               </div>
             ) : (
@@ -193,8 +295,11 @@ export function AdMediaUploader({
                 <p className="text-xs font-semibold text-zinc-200">
                   Click to select {mediaType === "video" ? "MP4 / WebM video" : "PNG / JPEG / WebP image"}
                 </p>
-                <p className="text-[11px] text-zinc-500">
-                  Max size: {mediaType === "video" ? "25 MB" : "5 MB"}
+                <p className="text-[11px] text-rose-400 font-medium">
+                  Enforcing Ratio: {spec.ratio} ({spec.recommendedWidth}×{spec.recommendedHeight}px)
+                </p>
+                <p className="text-[10px] text-zinc-500">
+                  Max file size: {mediaType === "video" ? "25 MB" : "5 MB"}
                 </p>
               </div>
             )}
@@ -221,30 +326,33 @@ export function AdMediaUploader({
         </div>
       )}
 
-      {/* Upload Feedback */}
+      {/* Validation / Error Feedback */}
       {uploadError && (
-        <p className="flex items-center gap-1.5 text-xs text-rose-400 bg-rose-950/30 border border-rose-900/40 p-2 rounded-lg">
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-          <span>{uploadError}</span>
-        </p>
+        <div className="flex items-start gap-2 text-xs text-rose-300 bg-rose-950/40 border border-rose-800/60 p-3 rounded-xl">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
+          <div className="space-y-1">
+            <span className="font-semibold text-rose-200">Upload Rejected:</span>
+            <p className="text-[11px] text-rose-300/90 leading-relaxed">{uploadError}</p>
+          </div>
+        </div>
       )}
       {uploadSuccess && (
-        <p className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-900/40 p-2 rounded-lg">
-          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+        <p className="flex items-center gap-2 text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-800/60 p-3 rounded-xl">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
           <span>{uploadSuccess}</span>
         </p>
       )}
 
       {/* Live Preview Card */}
       {mediaUrl && (
-        <div className="relative rounded-lg overflow-hidden border border-white/15 bg-black/40">
+        <div className="relative rounded-xl overflow-hidden border border-white/15 bg-black/60 shadow-xl">
           <button
             type="button"
             onClick={handleClear}
-            className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/70 hover:bg-rose-600 text-white transition-colors"
+            className="absolute top-2.5 right-2.5 z-10 p-1.5 rounded-full bg-black/80 hover:bg-rose-600 text-white transition-colors"
             title="Remove media"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </button>
 
           {mediaType === "video" ? (
@@ -257,20 +365,27 @@ export function AdMediaUploader({
               />
             </div>
           ) : (
-            <div className="relative max-h-56 w-full flex items-center justify-center bg-black/30 p-2">
+            <div className="relative max-h-64 w-full flex items-center justify-center bg-black/40 p-2">
               <img
                 src={mediaUrl}
                 alt="Ad Preview"
-                className="max-h-52 max-w-full rounded object-contain"
+                className="max-h-60 max-w-full rounded object-contain"
               />
             </div>
           )}
 
-          <div className="p-2.5 bg-[#0a0c12] border-t border-white/10 text-[11px] text-zinc-400 flex items-center justify-between">
-            <span className="truncate max-w-[80%]">{mediaUrl}</span>
-            <span className="shrink-0 px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-white/10 text-zinc-300">
-              {mediaType}
-            </span>
+          <div className="p-3 bg-[#0a0c12] border-t border-white/10 text-[11px] text-zinc-400 flex items-center justify-between">
+            <span className="truncate max-w-[70%]">{mediaUrl}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              {detectedDimensions && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  {detectedDimensions.width}×{detectedDimensions.height}px
+                </span>
+              )}
+              <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-white/10 text-zinc-300">
+                {mediaType}
+              </span>
+            </div>
           </div>
         </div>
       )}

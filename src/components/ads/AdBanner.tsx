@@ -99,21 +99,21 @@ export function AdBanner({ placement, className = "", initialAd }: AdBannerProps
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2.5 sm:p-3">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex items-end p-2.5 sm:p-3">
                 <div className="flex items-center justify-between w-full">
                   <div className="min-w-0 pr-4">
-                    <p className="text-xs sm:text-sm font-semibold text-white drop-shadow truncate">
+                    <p className="text-xs sm:text-sm font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] truncate">
                       {ad.title}
                     </p>
                     {ad.sponsorName && (
-                      <p className="text-[10px] text-zinc-300 drop-shadow">
+                      <p className="text-[10px] font-medium text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                         Presented by {ad.sponsorName}
                       </p>
                     )}
                   </div>
-                  <span className="shrink-0 inline-flex items-center gap-1 text-[11px] font-bold text-rose-300 group-hover:text-rose-200 transition-colors bg-white/10 group-hover:bg-rose-600/80 px-2.5 py-1 rounded-lg backdrop-blur-md">
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-950/50 px-3.5 py-1.5 rounded-lg transition-all border border-rose-400/40">
                     <span>Learn More</span>
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                   </span>
                 </div>
               </div>

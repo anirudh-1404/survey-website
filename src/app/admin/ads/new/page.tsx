@@ -190,10 +190,10 @@ export default function AdminNewAdPage() {
                 onChange={(e) => setPlacement(e.target.value as AdPlacement)}
                 className="w-full rounded-xl border border-white/10 bg-[#08090d] px-3.5 py-2.5 text-xs text-white focus:border-rose-500 focus:outline-none"
               >
-                <option value="banner_top">Top Banner (Header / Sub-Navbar)</option>
-                <option value="feed_inline">In-Feed Sponsored Card (Homepage / Polls)</option>
-                <option value="sidebar">Sidebar Column (Desktop detail views)</option>
-                <option value="poll_detail">Poll Detail Bottom (Above discourse)</option>
+                <option value="banner_top">Top Banner — 8:1 Ratio (1200×150px)</option>
+                <option value="feed_inline">In-Feed Card — 16:9 Ratio (1200×675px)</option>
+                <option value="sidebar">Sidebar Column — 1:1 Ratio (600×600px)</option>
+                <option value="poll_detail">Poll Detail Bottom — 16:9 Ratio (1200×675px)</option>
               </select>
             </div>
 
@@ -241,6 +241,7 @@ export default function AdminNewAdPage() {
             <AdMediaUploader
               mediaType={mediaType}
               mediaUrl={mediaUrl}
+              placement={placement}
               cloudinaryPublicId={cloudinaryPublicId}
               onChange={(data) => {
                 setMediaUrl(data.mediaUrl);
