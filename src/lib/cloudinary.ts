@@ -32,7 +32,14 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
   "image/jpg",
 ];
 
+export const ALLOWED_VIDEO_MIME_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime", // .mov
+];
+
 export const MAX_IMAGE_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_VIDEO_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 /**
  * Validate image file metadata against security constraints.
@@ -56,6 +63,34 @@ export function validateImageFile(file: { size: number; type: string }): {
     return {
       valid: false,
       error: "Invalid file type. Only JPEG, PNG, and WebP raster images are supported.",
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate video file metadata against security constraints.
+ */
+export function validateVideoFile(file: { size: number; type: string }): {
+  valid: boolean;
+  error?: string;
+} {
+  if (!file) {
+    return { valid: false, error: "No video file provided." };
+  }
+
+  if (file.size > MAX_VIDEO_FILE_SIZE_BYTES) {
+    return {
+      valid: false,
+      error: "Video file exceeds maximum permitted size of 25 MB.",
+    };
+  }
+
+  if (!ALLOWED_VIDEO_MIME_TYPES.includes(file.type.toLowerCase())) {
+    return {
+      valid: false,
+      error: "Invalid file type. Only MP4, WebM, and QuickTime videos are supported.",
     };
   }
 
@@ -134,11 +169,45 @@ export async function uploadImageToCloudinary(
 }
 
 /**
- * Safely delete an image from Cloudinary.
+ * Upload a video buffer to Cloudinary.
+ */
+export async function uploadVideoToCloudinary(
+  buffer: Buffer,
+  options?: { folder?: string }
+): Promise<{ url: string; publicId: string }> {
+  const cld = configureCloudinary();
+  const folder = options?.folder || "pulse/ads";
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cld.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "video",
+        allowed_formats: ["mp4", "webm", "mov"],
+      },
+      (error, result: UploadApiResponse | undefined) => {
+        if (error || !result) {
+          reject(new Error(error?.message || "Cloudinary video upload failed."));
+        } else {
+          resolve({
+            url: result.secure_url,
+            publicId: result.public_id,
+          });
+        }
+      }
+    );
+
+    uploadStream.end(buffer);
+  });
+}
+
+/**
+ * Safely delete an image or video asset from Cloudinary.
  * Strictly verifies ownership by asserting that publicId is inside the 'pulse/' namespace.
  */
 export async function deleteImageFromCloudinary(
-  publicId: string
+  publicId: string,
+  resourceType: "image" | "video" = "image"
 ): Promise<{ success: boolean; result?: string }> {
   if (!publicId || typeof publicId !== "string") {
     return { success: false };
@@ -153,10 +222,11 @@ export async function deleteImageFromCloudinary(
 
   try {
     const cld = configureCloudinary();
-    const res = await cld.uploader.destroy(trimmed, { resource_type: "image" });
+    const res = await cld.uploader.destroy(trimmed, { resource_type: resourceType });
     return { success: res.result === "ok", result: res.result };
   } catch (err: unknown) {
     console.error("[Cloudinary] Deletion error:", err instanceof Error ? err.message : err);
     return { success: false };
   }
 }
+

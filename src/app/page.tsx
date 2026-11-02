@@ -9,6 +9,7 @@ import { RecentBlogsSection } from "@/components/home/RecentBlogsSection";
 import { getPublishedPolls, getFeaturedPoll } from "@/lib/polls";
 import { getPublishedBlogs } from "@/lib/blogs";
 import { BlogPost } from "@/types/blog";
+import { AdBanner } from "@/components/ads/AdBanner";
 import { FEATURED_POLL, LATEST_POLLS } from "@/data/mockPolls";
 
 export const instant = false;
@@ -46,6 +47,9 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col bg-[#090a0f] text-zinc-100">
       {/* 1. Header & Navigation */}
       <Navbar />
+
+      {/* 1.1 Top Sponsored Banner */}
+      <AdBanner placement="banner_top" />
 
       <main className="flex-1">
         {/* 2. Hero Section */}

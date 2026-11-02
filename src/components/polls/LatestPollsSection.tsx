@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Poll, PollCategory } from "@/types/poll";
 import { PollCard } from "./PollCard";
 import { Filter, Layers } from "lucide-react";
+import { AdBanner } from "@/components/ads/AdBanner";
 
 interface LatestPollsSectionProps {
   polls: Poll[];
@@ -99,8 +100,13 @@ export function LatestPollsSection({ polls }: LatestPollsSectionProps) {
 
         {/* Poll Cards Grid */}
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPolls.map((poll) => (
-            <PollCard key={poll.id} poll={poll} />
+          {filteredPolls.map((poll, index) => (
+            <div key={poll.id} className="contents">
+              <PollCard poll={poll} />
+              {index === 2 && (
+                <AdBanner placement="feed_inline" />
+              )}
+            </div>
           ))}
         </div>
 

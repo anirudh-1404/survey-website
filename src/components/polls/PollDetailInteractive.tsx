@@ -23,6 +23,7 @@ import {
 import { PollImage } from "@/components/polls/PollImage";
 import { toast } from "sonner";
 import { PollChat } from "@/components/chat/PollChat";
+import { AdBanner } from "@/components/ads/AdBanner";
 
 interface PollDetailInteractiveProps {
   poll: Poll;
@@ -534,6 +535,9 @@ export function PollDetailInteractive({
           </div>
         </div>
       </div>
+
+      {/* Sponsored Ad Banner Slot */}
+      <AdBanner placement="poll_detail" className="my-6" />
 
       {/* =========================================================================
           Live Chat & Public Discourse Section (Replaces Comments)

@@ -8,7 +8,9 @@ import {
 } from "@/lib/auth";
 import {
   validateImageFile,
+  validateVideoFile,
   uploadImageToCloudinary,
+  uploadVideoToCloudinary,
 } from "@/lib/cloudinary";
 
 /**
@@ -52,22 +54,23 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Server-side file validation (size, MIME type)
-    const validation = validateImageFile({
-      size: file.size,
-      type: file.type,
-    });
+    const isVideo = file.type.startsWith("video/");
+    const validation = isVideo
+      ? validateVideoFile({ size: file.size, type: file.type })
+      : validateImageFile({ size: file.size, type: file.type });
 
     if (!validation.valid) {
-      return createErrorResponse(validation.error || "Invalid image file", 422);
+      return createErrorResponse(validation.error || "Invalid media file", 422);
     }
 
     // 6. Convert to buffer and upload to Cloudinary
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const uploadResult = await uploadImageToCloudinary(buffer, {
-      folder: "pulse/polls",
-    });
+    const folder = isVideo ? "pulse/ads/videos" : "pulse/polls";
+    const uploadResult = isVideo
+      ? await uploadVideoToCloudinary(buffer, { folder })
+      : await uploadImageToCloudinary(buffer, { folder });
 
     return createSuccessResponse(
       {

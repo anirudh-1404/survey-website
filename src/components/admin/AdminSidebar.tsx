@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   Inbox,
   FileText,
+  Megaphone,
   X,
 } from "lucide-react";
 import { PulseIcon } from "@/components/layout/PulseIcon";
@@ -61,6 +62,12 @@ export function AdminSidebar({
       label: "Blog CMS",
       href: "/admin/blogs",
       icon: FileText,
+      exact: false,
+    },
+    {
+      label: "Ad Campaigns",
+      href: "/admin/ads",
+      icon: Megaphone,
       exact: false,
     },
   ];
