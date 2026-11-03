@@ -14,7 +14,7 @@ import {
   Megaphone,
   X,
 } from "lucide-react";
-import { PulseIcon } from "@/components/layout/PulseIcon";
+import { SayNowLogo } from "@/components/layout/SayNowLogo";
 
 interface AdminSidebarProps {
   mobileOpen?: boolean;
@@ -79,10 +79,9 @@ export function AdminSidebar({
         <div className="flex items-center justify-between">
           <Link
             href="/admin"
-            className="flex items-center gap-2 text-base font-bold tracking-wider text-white"
+            className="flex items-center gap-2"
           >
-            <PulseIcon className="h-6 w-6" />
-            <span className="tracking-widest">PULSE</span>
+            <SayNowLogo iconClassName="h-6 w-6" textClassName="text-lg" />
             <span className="rounded bg-rose-950/40 px-1.5 py-0.5 text-[9px] font-bold text-rose-300 uppercase tracking-widest border border-rose-900/40">
               Admin
             </span>

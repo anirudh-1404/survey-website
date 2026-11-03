@@ -27,9 +27,9 @@ export function AboutPulse() {
             A clearer view of public opinion.
           </h2>
           <p className="mt-4 text-base leading-relaxed text-zinc-300 sm:text-lg">
-            PULSE brings people together to vote on important issues, explore different perspectives,
+            SayNow brings people together to vote on important issues, explore different perspectives,
             and take part in meaningful public discussions. Every poll invites participation,
-            while community comments help surface the reasoning behind different viewpoints.
+            while live citizen chats help surface the reasoning behind different viewpoints.
           </p>
         </div>
 

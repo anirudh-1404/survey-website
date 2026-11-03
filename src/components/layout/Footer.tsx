@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Shield, FileText, Info, Scale } from "lucide-react";
-import { PulseIcon } from "@/components/layout/PulseIcon";
+import { SayNowLogo } from "@/components/layout/SayNowLogo";
 
 export function Footer() {
   const currentYear = 2026;
@@ -11,12 +11,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:gap-12">
           {/* Brand and Mission */}
           <div className="space-y-4 md:col-span-2">
-            <div className="flex items-center gap-2.5">
-              <PulseIcon className="h-7 w-7" />
-              <span className="text-lg font-extrabold tracking-widest text-white">
-                PULSE
-              </span>
-            </div>
+            <SayNowLogo iconClassName="h-7 w-7" textClassName="text-xl" />
             <p className="max-w-md text-sm leading-relaxed text-zinc-400">
               An independent, non-partisan public opinion platform tracking civic
               sentiment on pivotal global developments, emerging technologies, and
@@ -115,9 +110,9 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-12 flex flex-col items-center justify-between border-t border-white/10 pt-6 text-xs text-zinc-400 sm:flex-row">
-          <p>© {currentYear} PULSE Research Initiative. All rights reserved.</p>
+          <p>© {currentYear} SayNow. All rights reserved.</p>
           <p className="mt-2 text-zinc-400 sm:mt-0">
-            Empirical Public Opinion Platform • Verified Sentiment
+            Empirical Public Opinion Platform • Verified Civic Sentiment
           </p>
         </div>
       </div>

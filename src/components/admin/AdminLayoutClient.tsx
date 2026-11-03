@@ -26,7 +26,7 @@ export function AdminLayoutClient({
       <div className="flex flex-1 flex-col min-w-0">
         <AdminHeader
           onOpenMobileMenu={() => setMobileSidebarOpen(true)}
-          title="PULSE Editorial Administration"
+          title="SayNow Editorial Administration"
           user={user}
         />
 

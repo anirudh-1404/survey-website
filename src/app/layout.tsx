@@ -17,8 +17,8 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pulse.org";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "PULSE — Public Opinion on Global Issues",
-    template: "%s | PULSE",
+    default: "SayNow — Public Opinion on Global Issues",
+    template: "%s | SayNow",
   },
   description:
     "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
@@ -28,20 +28,21 @@ export const metadata: Metadata = {
     "policy debate",
     "global surveys",
     "civic sentiment",
+    "SayNow",
   ],
-  authors: [{ name: "PULSE Editorial Team" }],
+  authors: [{ name: "SayNow Editorial Team" }],
   openGraph: {
-    title: "PULSE — Public Opinion on Global Issues",
+    title: "SayNow — Public Opinion on Global Issues",
     description:
       "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
     url: siteUrl,
-    siteName: "PULSE",
+    siteName: "SayNow",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PULSE — Public Opinion on Global Issues",
+    title: "SayNow — Public Opinion on Global Issues",
     description:
       "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
   },

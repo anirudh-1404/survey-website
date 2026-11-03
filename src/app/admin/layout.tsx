@@ -6,7 +6,7 @@ import { AdminLayoutClient } from "@/components/admin/AdminLayoutClient";
 import { ShieldAlert, ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "PULSE Editorial Administration — Backoffice Shell",
+  title: "SayNow Editorial Administration — Backoffice Shell",
   description:
     "Administrative dashboard for managing surveys, inquiries, and civic sentiment tracking.",
   robots: {
