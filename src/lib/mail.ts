@@ -64,8 +64,8 @@ export async function sendContactNotificationEmail(
 
   const senderAddress =
     process.env.EMAIL_FROM ||
-    process.env.EMAIL_USER ||
-    '"PULSE Inquiries" <no-reply@pulse.org>';
+    (process.env.EMAIL_USER ? `"SayNow" <${process.env.EMAIL_USER}>` : undefined) ||
+    '"SayNow Inquiries" <no-reply@saynow.in>';
 
   const formattedDate = (data.submittedAt || new Date()).toLocaleString("en-US", {
     dateStyle: "full",
@@ -78,7 +78,7 @@ export async function sendContactNotificationEmail(
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>New PULSE Contact Form Submission</title>
+        <title>New SayNow Contact Form Submission</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #090a0f; color: #f4f4f5; margin: 0; padding: 24px; }
           .container { max-width: 600px; margin: 0 auto; background-color: #12141c; border: 1px solid #27272a; border-radius: 12px; overflow: hidden; }
@@ -97,7 +97,7 @@ export async function sendContactNotificationEmail(
       <body>
         <div class="container">
           <div class="header">
-            <h1>PULSE • New Contact Form Inquiry</h1>
+            <h1>SayNow • New Contact Form Inquiry</h1>
             <p>Received on ${formattedDate}</p>
           </div>
           <div class="content">
@@ -119,7 +119,7 @@ export async function sendContactNotificationEmail(
             </div>
           </div>
           <div class="footer">
-            You received this email because you are the designated recipient for PULSE inquiries (<a href="mailto:${recipient}" style="color: #a1a1aa;">${recipient}</a>). You can directly hit "Reply" in your email client to respond to ${data.name}.
+            You received this email because you are the designated recipient for SayNow inquiries (<a href="mailto:${recipient}" style="color: #a1a1aa;">${recipient}</a>). You can directly hit "Reply" in your email client to respond to ${data.name}.
           </div>
         </div>
       </body>
@@ -127,7 +127,7 @@ export async function sendContactNotificationEmail(
   `;
 
   const textContent = `
-New Contact Inquiry from PULSE:
+New Contact Inquiry from SayNow:
 ----------------------------------------
 Date: ${formattedDate}
 From: ${data.name} (${data.email})
@@ -144,7 +144,7 @@ Target Recipient: ${recipient}
       from: senderAddress,
       to: recipient,
       replyTo: `"${data.name}" <${data.email}>`,
-      subject: `[PULSE Inquiry] ${data.subject} - from ${data.name}`,
+      subject: `[SayNow Inquiry] ${data.subject} - from ${data.name}`,
       text: textContent,
       html: htmlContent,
     });
