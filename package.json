@@ -21,6 +21,7 @@
     "sonner": "^2.0.8"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
     "@tailwindcss/turbopack": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
@@ -29,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "postcss": "^8.5.32",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
