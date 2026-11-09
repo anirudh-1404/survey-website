@@ -14,7 +14,6 @@ import { getUserVote } from "@/lib/votes";
 import { PollModel } from "@/models/Poll";
 import mongoose from "mongoose";
 import { getPollDiscussion } from "@/lib/comments";
-import { getPollById } from "@/data/mockPolls";
 import { connection } from "next/server";
 
 interface PollPageProps {
@@ -27,7 +26,7 @@ export async function generateMetadata({
   params,
 }: PollPageProps): Promise<Metadata> {
   const { id } = await params;
-  const poll = (await getPublicPollByIdOrSlug(id)) || getPollById(id);
+  const poll = await getPublicPollByIdOrSlug(id);
 
   if (!poll || poll.status === "Draft") {
     return {
@@ -72,15 +71,7 @@ export default async function PollDetailPage({ params }: PollPageProps) {
   const { id } = await params;
 
   // 1. Fetch from live database (strictly published or closed; drafts return null)
-  let poll = await getPublicPollByIdOrSlug(id);
-
-  // Fallback to static mock if not in database yet (e.g. initial demo routes)
-  if (!poll) {
-    const fallback = getPollById(id);
-    if (fallback && fallback.status !== "Draft") {
-      poll = fallback;
-    }
-  }
+  const poll = await getPublicPollByIdOrSlug(id);
 
   // Handle unknown poll ID or draft status gracefully with 404
   if (!poll) {

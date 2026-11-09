@@ -113,18 +113,22 @@ export function LatestPollsSection({ polls }: LatestPollsSectionProps) {
         {filteredPolls.length === 0 && (
           <div className="mt-12 rounded-xl border border-white/10 bg-[#11131c] p-12 text-center">
             <p className="text-zinc-300 text-sm">
-              No polls match the selected filter combination.
+              {polls.length === 0
+                ? "No polls published yet. New surveys will appear here as soon as they are launched!"
+                : "No polls match the selected filter combination."}
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCategory("All");
-                setStatusFilter("All");
-              }}
-              className="mt-4 text-xs font-semibold text-rose-400 hover:text-rose-300"
-            >
-              Reset filters
-            </button>
+            {polls.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory("All");
+                  setStatusFilter("All");
+                }}
+                className="mt-4 text-xs font-semibold text-rose-400 hover:text-rose-300 cursor-pointer"
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -5,7 +5,6 @@ import { Footer } from "@/components/layout/Footer";
 import { PollCard } from "@/components/polls/PollCard";
 import { getPublishedPolls } from "@/lib/polls";
 import { Poll, PollCategory } from "@/types/poll";
-import { LATEST_POLLS } from "@/data/mockPolls";
 import { Layers, BarChart3, HelpCircle } from "lucide-react";
 
 interface PollsPageProps {
@@ -52,12 +51,9 @@ export default async function PollsListingPage({ searchParams }: PollsPageProps)
 
     if (dbPolls && dbPolls.length > 0) {
       polls = dbPolls;
-    } else if (selectedCategory === "All") {
-      // Graceful fallback to static editorial surveys if database has zero polls
-      polls = LATEST_POLLS;
     }
   } catch {
-    polls = LATEST_POLLS;
+    polls = [];
   }
 
   // Filter by status if requested

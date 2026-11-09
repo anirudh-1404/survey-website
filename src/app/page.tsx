@@ -9,16 +9,16 @@ import { RecentBlogsSection } from "@/components/home/RecentBlogsSection";
 import { getPublishedPolls, getFeaturedPoll } from "@/lib/polls";
 import { getPublishedBlogs } from "@/lib/blogs";
 import { BlogPost } from "@/types/blog";
+import { Poll } from "@/types/poll";
 import { AdBanner } from "@/components/ads/AdBanner";
-import { FEATURED_POLL, LATEST_POLLS } from "@/data/mockPolls";
 import { connection } from "next/server";
 
 export const instant = false;
 
 export default async function HomePage() {
   await connection();
-  let featuredPoll = FEATURED_POLL;
-  let latestPolls = LATEST_POLLS;
+  let featuredPoll: Poll | null = null;
+  let latestPolls: Poll[] = [];
   let recentBlogs: BlogPost[] = [];
 
   try {
@@ -34,7 +34,10 @@ export default async function HomePage() {
 
     if (dbPublished && dbPublished.length > 0) {
       // Exclude featured poll from the general latest grid to prevent redundancy
-      const filtered = dbPublished.filter((p) => p.id !== featuredPoll.id);
+      const currentFeaturedId = featuredPoll?.id;
+      const filtered = currentFeaturedId
+        ? dbPublished.filter((p) => p.id !== currentFeaturedId)
+        : dbPublished;
       latestPolls = filtered.length > 0 ? filtered : dbPublished;
     }
 
@@ -58,7 +61,7 @@ export default async function HomePage() {
         <Hero />
 
         {/* 3. Featured Poll Section (Database-Backed) */}
-        <FeaturedPoll poll={featuredPoll} />
+        {featuredPoll && <FeaturedPoll poll={featuredPoll} />}
 
         {/* 4. Latest Polls Section (Database-Backed) */}
         <LatestPollsSection polls={latestPolls} />
