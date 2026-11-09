@@ -13,6 +13,7 @@ import {
   ChevronRight,
   BookOpen,
 } from "lucide-react";
+import { connection } from "next/server";
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
@@ -77,6 +78,7 @@ export async function generateMetadata({
 }
 
 export default async function BlogPostDetailPage({ params }: BlogPageProps) {
+  await connection();
   const { slug } = await params;
   const blog = await getPublishedBlogBySlug(slug);
 

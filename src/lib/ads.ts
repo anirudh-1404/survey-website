@@ -22,8 +22,8 @@ export function formatAd(doc: IAd): Ad {
     endDate: doc.endDate ? doc.endDate.toISOString() : undefined,
     impressions: doc.impressions || 0,
     clicks: doc.clicks || 0,
-    createdAt: doc.createdAt ? doc.createdAt.toISOString() : new Date().toISOString(),
-    updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : new Date().toISOString(),
+    createdAt: doc.createdAt ? doc.createdAt.toISOString() : new Date(0).toISOString(),
+    updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : new Date(0).toISOString(),
   };
 }
 

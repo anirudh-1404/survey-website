@@ -11,10 +11,12 @@ import { getPublishedBlogs } from "@/lib/blogs";
 import { BlogPost } from "@/types/blog";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { FEATURED_POLL, LATEST_POLLS } from "@/data/mockPolls";
+import { connection } from "next/server";
 
 export const instant = false;
 
 export default async function HomePage() {
+  await connection();
   let featuredPoll = FEATURED_POLL;
   let latestPolls = LATEST_POLLS;
   let recentBlogs: BlogPost[] = [];

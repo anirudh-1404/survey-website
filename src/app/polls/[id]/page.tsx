@@ -15,6 +15,7 @@ import { PollModel } from "@/models/Poll";
 import mongoose from "mongoose";
 import { getPollDiscussion } from "@/lib/comments";
 import { getPollById } from "@/data/mockPolls";
+import { connection } from "next/server";
 
 interface PollPageProps {
   params: Promise<{ id: string }>;
@@ -67,6 +68,7 @@ export async function generateMetadata({
 }
 
 export default async function PollDetailPage({ params }: PollPageProps) {
+  await connection();
   const { id } = await params;
 
   // 1. Fetch from live database (strictly published or closed; drafts return null)
