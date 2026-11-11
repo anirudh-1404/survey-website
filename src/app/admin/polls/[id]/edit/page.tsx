@@ -11,6 +11,8 @@ import {
   Save,
   Loader2,
   ExternalLink,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { PollCategory } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
@@ -35,8 +37,10 @@ export default function EditPollPage({ params }: EditPollPageProps) {
   const [context, setContext] = useState("");
   const [sourceReference, setSourceReference] = useState("");
   const [editorialNote, setEditorialNote] = useState("");
-  const [yesLabel, setYesLabel] = useState("");
-  const [noLabel, setNoLabel] = useState("");
+  const [options, setOptions] = useState<Array<{ key: string; label: string }>>([
+    { key: "yes", label: "Yes — In favor of the proposed measure" },
+    { key: "no", label: "No — Opposed to the proposed measure" },
+  ]);
   const [status, setStatus] = useState<"draft" | "published" | "closed">("draft");
   const [closesAt, setClosesAt] = useState("");
   const [featured, setFeatured] = useState(false);
@@ -47,6 +51,37 @@ export default function EditPollPage({ params }: EditPollPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleAddOption = () => {
+    const nextIdx = options.length + 1;
+    setOptions((prev) => [
+      ...prev,
+      { key: `option_${nextIdx}`, label: "" },
+    ]);
+  };
+
+  const handleRemoveOption = (indexToRemove: number) => {
+    if (options.length <= 2) {
+      toast.error("A poll must have at least 2 options.");
+      return;
+    }
+    setOptions((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleOptionChange = (index: number, newLabel: string) => {
+    setOptions((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], label: newLabel };
+      return copy;
+    });
+  };
+
+  const handleSetBinaryPreset = () => {
+    setOptions([
+      { key: "yes", label: "Yes — In favor of the proposed measure" },
+      { key: "no", label: "No — Opposed to the proposed measure" },
+    ]);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -75,10 +110,19 @@ export default function EditPollPage({ params }: EditPollPageProps) {
           setCloudinaryPublicId(p.cloudinaryPublicId || "");
           setImageAlt(p.imageAlt || "");
 
-          const yesOpt = p.options?.find((o: { key: string }) => o.key === "yes") || p.options?.[0];
-          const noOpt = p.options?.find((o: { key: string }) => o.key === "no") || p.options?.[1];
-          setYesLabel(yesOpt?.label || "Yes — In favor of the proposed measure");
-          setNoLabel(noOpt?.label || "No — Opposed to the proposed measure");
+          if (Array.isArray(p.options) && p.options.length >= 2) {
+            setOptions(
+              p.options.map((o: { key?: string; label?: string }, i: number) => ({
+                key: o.key || (i === 0 ? "yes" : i === 1 ? "no" : `option_${i + 1}`),
+                label: o.label || "",
+              }))
+            );
+          } else {
+            setOptions([
+              { key: "yes", label: "Yes — In favor of the proposed measure" },
+              { key: "no", label: "No — Opposed to the proposed measure" },
+            ]);
+          }
         }
       } catch {
         if (isMounted) setLoadError("A network error occurred while loading the poll.");
@@ -100,11 +144,19 @@ export default function EditPollPage({ params }: EditPollPageProps) {
     if (!summary.trim() || summary.trim().length < 20) {
       errs.summary = "Summary must be at least 20 characters long.";
     }
-    if (!yesLabel.trim()) {
-      errs.yesLabel = "Yes option label is required.";
-    }
-    if (!noLabel.trim()) {
-      errs.noLabel = "No option label is required.";
+    if (!options || options.length < 2) {
+      errs.options = "A poll must have at least 2 options.";
+    } else {
+      let emptyCount = 0;
+      options.forEach((opt, idx) => {
+        if (!opt.label.trim()) {
+          errs[`option_${idx}`] = `Option ${idx + 1} description cannot be empty.`;
+          emptyCount++;
+        }
+      });
+      if (emptyCount > 0) {
+        errs.options = "All options must have a description.";
+      }
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -118,6 +170,23 @@ export default function EditPollPage({ params }: EditPollPageProps) {
     setFeedback(null);
 
     try {
+      const seenOptionKeys = new Set<string>();
+      const formattedOptions = options.map((opt, i) => {
+        const label = opt.label.trim();
+        let baseKey = opt.key?.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+        if (!baseKey) {
+          baseKey = i === 0 ? "yes" : i === 1 ? "no" : `option_${i + 1}`;
+        }
+        let key = baseKey;
+        let counter = 1;
+        while (seenOptionKeys.has(key)) {
+          key = `${baseKey}_${counter}`;
+          counter++;
+        }
+        seenOptionKeys.add(key);
+        return { key, label };
+      });
+
       const res = await fetch(`/api/admin/polls/${pollId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -131,10 +200,7 @@ export default function EditPollPage({ params }: EditPollPageProps) {
           status,
           closesAt: closesAt ? new Date(closesAt).toISOString() : null,
           featured,
-          options: [
-            { key: "yes", label: yesLabel.trim() },
-            { key: "no", label: noLabel.trim() },
-          ],
+          options: formattedOptions,
           imageUrl: imageUrl.trim() || "",
           cloudinaryPublicId: cloudinaryPublicId.trim() || "",
           imageAlt: imageAlt.trim() || "",
@@ -455,48 +521,103 @@ export default function EditPollPage({ params }: EditPollPageProps) {
 
         {/* Card 3: Options */}
         <div className="rounded-xl border border-white/10 bg-[#10121a] p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              3. Balloting Options
-            </h3>
-            <span className="text-xs text-zinc-500 flex items-center gap-1">
-              <HelpCircle className="h-3.5 w-3.5" />
-              Binary Choices
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span>3. Balloting Options</span>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+                  {options.length} {options.length === 1 ? "choice" : "choices"}
+                </span>
+              </h3>
+              <p className="text-xs text-zinc-400 mt-1">
+                Configure answer choices. You can add multiple choices beyond standard Yes/No.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSetBinaryPreset}
+                className="text-[11px] font-medium text-zinc-400 hover:text-white px-2.5 py-1 rounded border border-white/10 hover:bg-white/5 transition-colors cursor-pointer"
+                title="Reset to standard Yes/No"
+              >
+                Reset to Yes/No
+              </button>
+              <button
+                type="button"
+                onClick={handleAddOption}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg border border-rose-500/20 transition-all cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Option</span>
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <label
-                htmlFor="edit-yes"
-                className="block text-xs font-semibold text-zinc-300 mb-1"
-              >
-                Yes Option Description <span className="text-rose-500">*</span>
-              </label>
-              <input
-                id="edit-yes"
-                type="text"
-                value={yesLabel}
-                onChange={(e) => setYesLabel(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-rose-500"
-              />
+          {errors.options && (
+            <div className="flex items-center gap-2 rounded-lg bg-rose-950/40 border border-rose-500/30 p-3 text-xs text-rose-300">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+              <span>{errors.options}</span>
             </div>
+          )}
 
-            <div>
-              <label
-                htmlFor="edit-no"
-                className="block text-xs font-semibold text-zinc-300 mb-1"
-              >
-                No Option Description <span className="text-rose-500">*</span>
-              </label>
-              <input
-                id="edit-no"
-                type="text"
-                value={noLabel}
-                onChange={(e) => setNoLabel(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-rose-500"
-              />
-            </div>
+          <div className="space-y-3">
+            {options.map((opt, idx) => {
+              const letter = String.fromCharCode(65 + idx);
+              const isError = Boolean(errors[`option_${idx}`]);
+              const canDelete = options.length > 2;
+
+              return (
+                <div
+                  key={idx}
+                  className="rounded-lg border border-white/10 bg-[#151824] p-3 transition-colors hover:border-white/20"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-bold text-zinc-200">
+                      {letter}
+                    </span>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={opt.label}
+                        onChange={(e) => handleOptionChange(idx, e.target.value)}
+                        placeholder={`Option ${letter} Description (e.g. Strongly Agree, Neutral, Opposed...)`}
+                        className={`w-full rounded-md border ${
+                          isError
+                            ? "border-rose-500 bg-rose-950/20 text-rose-100"
+                            : "border-white/10 bg-[#10121a] text-zinc-100"
+                        } px-3.5 py-2 text-xs focus:outline-none focus:border-rose-500`}
+                      />
+                    </div>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveOption(idx)}
+                        className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors cursor-pointer"
+                        title="Remove option"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {isError && (
+                    <p className="text-[11px] text-rose-400 mt-1.5 pl-9">
+                      {errors[`option_${idx}`]}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleAddOption}
+              className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-3.5 py-2 transition-all cursor-pointer w-full justify-center"
+            >
+              <Plus className="h-4 w-4 text-rose-400" />
+              <span>Add Another Option</span>
+            </button>
           </div>
         </div>
 

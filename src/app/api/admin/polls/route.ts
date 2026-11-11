@@ -170,11 +170,23 @@ export async function POST(request: NextRequest) {
     const slug = await generateUniqueSlug(cleanTitle);
 
     // 4. Build options
+    const seenOptionKeys = new Set<string>();
     const parsedOptions = Array.isArray(options) && options.length >= 2
-      ? options.map((opt: { key?: string; label?: string }, i: number) => ({
-          key: (opt.key || (i === 0 ? "yes" : "no")).trim().toLowerCase(),
-          label: (opt.label || "").trim() || (i === 0 ? "Yes" : "No"),
-        }))
+      ? options.map((opt: { key?: string; label?: string }, i: number) => {
+          const label = typeof opt.label === "string" ? opt.label.trim() : "";
+          let baseKey = typeof opt.key === "string" ? opt.key.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : "";
+          if (!baseKey) {
+            baseKey = i === 0 ? "yes" : i === 1 ? "no" : `option_${i + 1}`;
+          }
+          let key = baseKey;
+          let counter = 1;
+          while (seenOptionKeys.has(key)) {
+            key = `${baseKey}_${counter}`;
+            counter++;
+          }
+          seenOptionKeys.add(key);
+          return { key, label: label || `Option ${i + 1}` };
+        })
       : [
           { key: "yes", label: "Yes — In favor of the proposed measure" },
           { key: "no", label: "No — Opposed to the proposed measure" },

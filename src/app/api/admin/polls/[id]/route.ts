@@ -182,10 +182,22 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     if (Array.isArray(body.options) && body.options.length >= 2) {
-      poll.options = body.options.map((opt: { key?: string; label?: string }, i: number) => ({
-        key: (opt.key || (i === 0 ? "yes" : "no")).trim().toLowerCase(),
-        label: (opt.label || "").trim() || (i === 0 ? "Yes" : "No"),
-      }));
+      const seenOptionKeys = new Set<string>();
+      poll.options = body.options.map((opt: { key?: string; label?: string }, i: number) => {
+        const label = typeof opt.label === "string" ? opt.label.trim() : "";
+        let baseKey = typeof opt.key === "string" ? opt.key.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : "";
+        if (!baseKey) {
+          baseKey = i === 0 ? "yes" : i === 1 ? "no" : `option_${i + 1}`;
+        }
+        let key = baseKey;
+        let counter = 1;
+        while (seenOptionKeys.has(key)) {
+          key = `${baseKey}_${counter}`;
+          counter++;
+        }
+        seenOptionKeys.add(key);
+        return { key, label: label || `Option ${i + 1}` };
+      });
     }
 
     // Image Mutation & Cloudinary Asset Cleanup

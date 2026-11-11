@@ -25,6 +25,15 @@ import { toast } from "sonner";
 import { PollChat } from "@/components/chat/PollChat";
 import { AdBanner } from "@/components/ads/AdBanner";
 
+const MULTI_OPTION_THEMES = [
+  { border: "border-rose-500", bg: "bg-rose-950/30", ring: "ring-rose-500/50", bar: "bg-rose-600", badgeBg: "border-rose-500 bg-rose-600 text-white" },
+  { border: "border-blue-500", bg: "bg-blue-950/30", ring: "ring-blue-500/50", bar: "bg-blue-500", badgeBg: "border-blue-500 bg-blue-600 text-white" },
+  { border: "border-emerald-500", bg: "bg-emerald-950/30", ring: "ring-emerald-500/50", bar: "bg-emerald-500", badgeBg: "border-emerald-500 bg-emerald-600 text-white" },
+  { border: "border-amber-500", bg: "bg-amber-950/30", ring: "ring-amber-500/50", bar: "bg-amber-500", badgeBg: "border-amber-500 bg-amber-600 text-white" },
+  { border: "border-purple-500", bg: "bg-purple-950/30", ring: "ring-purple-500/50", bar: "bg-purple-500", badgeBg: "border-purple-500 bg-purple-600 text-white" },
+  { border: "border-cyan-500", bg: "bg-cyan-950/30", ring: "ring-cyan-500/50", bar: "bg-cyan-500", badgeBg: "border-cyan-500 bg-cyan-600 text-white" },
+];
+
 interface PollDetailInteractiveProps {
   poll: Poll;
   initialComments?: PollComment[];
@@ -361,7 +370,34 @@ export function PollDetailInteractive({
                     selectedOption === opt.id ||
                     selectedOption === optKey ||
                     userVote === optKey;
-                  const isYes = optKey === "yes" || idx === 0;
+                  const isBinary =
+                    optionsState.length === 2 &&
+                    (optKey === "yes" || optKey === "no" || optionsState[0]?.id?.includes("yes"));
+                  const isYes = optKey === "yes" || (isBinary && idx === 0);
+                  const theme = MULTI_OPTION_THEMES[idx % MULTI_OPTION_THEMES.length];
+                  const letterBadge = isBinary ? (isYes ? "Y" : "N") : String.fromCharCode(65 + idx);
+
+                  const borderBgClasses = isSelected
+                    ? isBinary
+                      ? isYes
+                        ? "border-rose-500 bg-rose-950/30 ring-1 ring-rose-500/50"
+                        : "border-zinc-300 bg-white/10 ring-1 ring-zinc-300/40"
+                      : `${theme.border} ${theme.bg} ring-1 ${theme.ring}`
+                    : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]";
+
+                  const badgeClasses = isSelected
+                    ? isBinary
+                      ? isYes
+                        ? "border-rose-500 bg-rose-600 text-white"
+                        : "border-zinc-300 bg-zinc-200 text-zinc-950"
+                      : theme.badgeBg
+                    : "border-zinc-600 text-zinc-400 group-hover:border-zinc-400";
+
+                  const barColor = isBinary
+                    ? isYes
+                      ? "bg-rose-600"
+                      : "bg-zinc-400"
+                    : theme.bar;
 
                   return (
                     <button
@@ -371,31 +407,17 @@ export function PollDetailInteractive({
                       onClick={() => setSelectedOption(opt.id)}
                       className={`group w-full rounded-lg border p-4 text-left transition-all ${
                         hasVoted || isClosed ? "cursor-default" : "cursor-pointer"
-                      } focus-visible:ring-2 focus-visible:ring-rose-500 ${
-                        isSelected
-                          ? isYes
-                            ? "border-rose-500 bg-rose-950/30 ring-1 ring-rose-500/50"
-                            : "border-zinc-300 bg-white/10 ring-1 ring-zinc-300/40"
-                          : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]"
-                      }`}
+                      } focus-visible:ring-2 focus-visible:ring-rose-500 ${borderBgClasses}`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span
-                            className={`flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold ${
-                              isSelected
-                                ? isYes
-                                  ? "border-rose-500 bg-rose-600 text-white"
-                                  : "border-zinc-300 bg-zinc-200 text-zinc-950"
-                                : "border-zinc-600 text-zinc-400 group-hover:border-zinc-400"
-                            }`}
+                            className={`flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold ${badgeClasses}`}
                           >
                             {isSelected ? (
                               <Check className="h-3 w-3 stroke-[3]" />
-                            ) : isYes ? (
-                              "Y"
                             ) : (
-                              "N"
+                              letterBadge
                             )}
                           </span>
                           <span className="text-sm font-semibold text-white">
@@ -414,9 +436,7 @@ export function PollDetailInteractive({
                       {showResults && (
                         <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
                           <div
-                            className={`h-full rounded-full transition-all duration-700 ${
-                              isYes ? "bg-rose-600" : "bg-zinc-400"
-                            }`}
+                            className={`h-full rounded-full transition-all duration-700 ${barColor}`}
                             style={{ width: `${opt.percentage}%` }}
                           />
                         </div>
