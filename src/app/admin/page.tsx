@@ -2,7 +2,7 @@ import Link from "next/link";
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import { User } from "@/models/User";
-import { getSiteAnalytics } from "@/lib/analytics";
+import { getSiteAnalytics, getRecentVisits } from "@/lib/analytics";
 import {
   Layers,
   CheckCircle2,
@@ -14,6 +14,9 @@ import {
   Edit,
   Globe,
   Eye,
+  Activity,
+  Smartphone,
+  Laptop,
 } from "lucide-react";
 
 export default async function AdminOverviewPage() {
@@ -28,6 +31,7 @@ export default async function AdminOverviewPage() {
     siteAnalytics,
     pollViewsAgg,
     recentPolls,
+    recentVisits,
   ] = await Promise.all([
     PollModel.countDocuments(),
     PollModel.countDocuments({ status: "published" }),
@@ -43,6 +47,7 @@ export default async function AdminOverviewPage() {
       .limit(6)
       .populate("createdBy", "name email")
       .lean(),
+    getRecentVisits(6),
   ]);
 
   const totalPollViews = pollViewsAgg[0]?.totalViews || 0;
@@ -322,6 +327,140 @@ export default async function AdminOverviewPage() {
                             <span>Edit</span>
                           </Link>
                         </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Live Audience Activity Stream */}
+      <div className="rounded-xl border border-white/10 bg-[#10121a] p-6 space-y-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-emerald-400" />
+            <div>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                Live Citizen & Audience Activity
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Real-time activity of citizens and guest visitors interacting with polls and website content.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/admin/traffic"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors"
+          >
+            <span>View All Traffic Logs ({siteAnalytics.totalVisits})</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+
+        {recentVisits.length === 0 ? (
+          <div className="py-8 text-center text-xs text-zinc-500">
+            No live visitor records logged yet. New visitor activity will appear here automatically.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-white/10 text-zinc-400 uppercase tracking-wider font-semibold">
+                  <th className="pb-3 pr-4">Citizen / Visitor</th>
+                  <th className="pb-3 px-4">Visited Page / Poll</th>
+                  <th className="pb-3 px-4">Device & Browser</th>
+                  <th className="pb-3 px-4">Source</th>
+                  <th className="pb-3 pl-4 text-right">Time</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-zinc-300">
+                {recentVisits.map((visit) => {
+                  const isUser = Boolean(visit.user?.name);
+
+                  return (
+                    <tr key={visit._id.toString()} className="hover:bg-white/[0.02]">
+                      <td className="py-3.5 pr-4 whitespace-nowrap">
+                        {isUser ? (
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-bold text-[10px]">
+                              {visit.user?.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-white">
+                                  {visit.user?.name}
+                                </span>
+                                <span className="rounded bg-emerald-950/50 px-1.5 py-0.2 text-[9px] font-semibold text-emerald-400 border border-emerald-500/30 uppercase">
+                                  {visit.user?.role || "Citizen"}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-zinc-400 font-mono">
+                                {visit.user?.email}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-800 border border-white/10 text-zinc-400 text-[9px]">
+                              {visit.device?.includes("Phone") || visit.device === "iPhone" ? (
+                                <Smartphone className="h-3 w-3 text-zinc-300" />
+                              ) : (
+                                <Laptop className="h-3 w-3 text-zinc-300" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-zinc-300">Guest Visitor</span>
+                                <span className="rounded bg-zinc-800 px-1 py-0.2 text-[9px] font-mono text-zinc-400">
+                                  #{visit.visitorId ? visit.visitorId.slice(-5) : "anon"}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-zinc-500">{visit.device || "Desktop"}</span>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4 max-w-xs truncate">
+                        {visit.pollTitle ? (
+                          <Link
+                            href={`/polls/${visit.pollSlug}`}
+                            target="_blank"
+                            className="font-medium text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-1 truncate"
+                          >
+                            <span className="truncate">{visit.pollTitle}</span>
+                            <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />
+                          </Link>
+                        ) : (
+                          <span className="font-mono text-zinc-300">
+                            {visit.path === "/" ? "Home (/)" : visit.path}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4 whitespace-nowrap text-zinc-300">
+                        <span className="font-medium">{visit.device || "Desktop"}</span>
+                        <span className="text-zinc-500 text-[10px] block">
+                          {visit.browser} • {visit.os}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="rounded bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] font-medium text-zinc-300">
+                          {visit.source || "Direct"}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 pl-4 text-right whitespace-nowrap font-mono text-zinc-400 text-[11px]">
+                        {new Date(visit.createdAt).toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                       </td>
                     </tr>
                   );

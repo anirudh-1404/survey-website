@@ -12,6 +12,7 @@ import {
   Inbox,
   FileText,
   Megaphone,
+  Activity,
   X,
 } from "lucide-react";
 import { SayNowLogo } from "@/components/layout/SayNowLogo";
@@ -39,6 +40,12 @@ export function AdminSidebar({
       href: "/admin/polls",
       icon: Layers,
       exact: true,
+    },
+    {
+      label: "Audience & Traffic",
+      href: "/admin/traffic",
+      icon: Activity,
+      exact: false,
     },
     {
       label: "Create New Poll",
