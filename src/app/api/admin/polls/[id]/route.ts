@@ -134,18 +134,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    if (typeof body.category === "string" && body.category.trim()) {
-      const validCategories = [
-        "Technology & AI",
-        "Global Economy",
-        "Geopolitics",
-        "Climate & Energy",
-        "Society & Culture",
-        "Health & Science",
-      ];
-      if (validCategories.includes(body.category)) {
-        poll.category = body.category as PollCategory;
-      }
+    if (typeof body.category === "string" && body.category.trim().length >= 2) {
+      poll.category = body.category.trim();
     }
 
     if (typeof body.summary === "string" && body.summary.trim()) {

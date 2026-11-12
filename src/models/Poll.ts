@@ -67,14 +67,9 @@ const PollSchema = new Schema<IPoll>(
     category: {
       type: String,
       required: [true, "Category is required"],
-      enum: [
-        "Technology & AI",
-        "Global Economy",
-        "Geopolitics",
-        "Climate & Energy",
-        "Society & Culture",
-        "Health & Science",
-      ],
+      trim: true,
+      minlength: [2, "Category must be at least 2 characters long"],
+      maxlength: [100, "Category cannot exceed 100 characters"],
       index: true,
     },
     summary: {

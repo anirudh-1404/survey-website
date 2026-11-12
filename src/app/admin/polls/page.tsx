@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import {
   PlusCircle,
   Search,
@@ -43,6 +44,14 @@ export default function AdminPollsPage() {
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>(DEFAULT_POLL_CATEGORIES);
+    polls.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return Array.from(set);
+  }, [polls]);
 
   const fetchPolls = useCallback(async () => {
     setIsLoading(true);
@@ -175,12 +184,11 @@ export default function AdminPollsPage() {
               className="w-full rounded-lg border border-white/10 bg-[#151824] px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
             >
               <option value="All">All Categories</option>
-              <option value="Technology & AI">Technology & AI</option>
-              <option value="Global Economy">Global Economy</option>
-              <option value="Climate & Energy">Climate & Energy</option>
-              <option value="Society & Culture">Society & Culture</option>
-              <option value="Geopolitics">Geopolitics</option>
-              <option value="Health & Science">Health & Science</option>
+              {availableCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
             </select>
           </div>
 

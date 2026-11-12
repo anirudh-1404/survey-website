@@ -14,7 +14,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { PollCategory } from "@/types/poll";
+import { PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
 import { toast } from "sonner";
 
@@ -22,7 +22,10 @@ export default function CreatePollPage() {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<PollCategory>("Technology & AI");
+  const [categoryList, setCategoryList] = useState<string[]>([...DEFAULT_POLL_CATEGORIES]);
+  const [category, setCategory] = useState<string>("Technology & AI");
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState("");
   const [summary, setSummary] = useState("");
   const [context, setContext] = useState("");
   const [sourceReference, setSourceReference] = useState("");
@@ -71,6 +74,21 @@ export default function CreatePollPage() {
       { key: "yes", label: "Yes — In favor of the proposed measure" },
       { key: "no", label: "No — Opposed to the proposed measure" },
     ]);
+  };
+
+  const handleAddCustomCategory = () => {
+    const trimmed = customCategoryInput.trim();
+    if (!trimmed) {
+      toast.error("Please enter a category name");
+      return;
+    }
+    if (!categoryList.includes(trimmed)) {
+      setCategoryList((prev) => [...prev, trimmed]);
+    }
+    setCategory(trimmed);
+    setCustomCategoryInput("");
+    setIsCustomCategory(false);
+    toast.success(`Category "${trimmed}" added and selected`);
   };
 
   const validate = () => {
@@ -289,25 +307,83 @@ export default function CreatePollPage() {
           {/* Category & Status */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-1">
             <div>
-              <label
-                htmlFor="poll-category"
-                className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5"
-              >
-                Inquiry Category
-              </label>
-              <select
-                id="poll-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as PollCategory)}
-                className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
-              >
-                <option value="Technology & AI">Technology & AI</option>
-                <option value="Global Economy">Global Economy</option>
-                <option value="Climate & Energy">Climate & Energy</option>
-                <option value="Society & Culture">Society & Culture</option>
-                <option value="Geopolitics">Geopolitics</option>
-                <option value="Health & Science">Health & Science</option>
-              </select>
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  htmlFor="poll-category"
+                  className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
+                >
+                  Inquiry Category
+                </label>
+                {!isCustomCategory && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomCategory(true)}
+                    className="text-[11px] font-semibold text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                  >
+                    + Add New Category
+                  </button>
+                )}
+              </div>
+
+              {isCustomCategory ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={customCategoryInput}
+                      onChange={(e) => setCustomCategoryInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddCustomCategory();
+                        }
+                      }}
+                      placeholder="e.g. Entertainment & Cinema, Mythology"
+                      className="w-full rounded-lg border border-rose-500/50 bg-[#151824] px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomCategory}
+                      className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-500 transition-colors shrink-0 cursor-pointer"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomCategory(false)}
+                      className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-zinc-400 hover:text-white transition-colors shrink-0 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-zinc-500">
+                    Type a new category name and click Add (or press Enter).
+                  </p>
+                </div>
+              ) : (
+                <select
+                  id="poll-category"
+                  value={category}
+                  onChange={(e) => {
+                    if (e.target.value === "__custom__") {
+                      setIsCustomCategory(true);
+                    } else {
+                      setCategory(e.target.value);
+                    }
+                  }}
+                  className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+                >
+                  {categoryList.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                  <option value="__custom__" className="text-rose-400 font-semibold">
+                    + Add Custom Category...
+                  </option>
+                </select>
+              )}
             </div>
 
             <div>

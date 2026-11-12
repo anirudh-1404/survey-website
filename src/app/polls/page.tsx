@@ -4,7 +4,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PollCard } from "@/components/polls/PollCard";
 import { getPublishedPolls } from "@/lib/polls";
-import { Poll, PollCategory } from "@/types/poll";
+import { Poll, PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
+import { PollModel } from "@/models/Poll";
 import { Layers, BarChart3, HelpCircle } from "lucide-react";
 
 interface PollsPageProps {
@@ -26,32 +27,30 @@ export const metadata: Metadata = {
   },
 };
 
-const CATEGORIES: ("All" | PollCategory)[] = [
-  "All",
-  "Technology & AI",
-  "Global Economy",
-  "Climate & Energy",
-  "Society & Culture",
-  "Geopolitics",
-  "Health & Science",
-];
-
 export default async function PollsListingPage({ searchParams }: PollsPageProps) {
   const { category: categoryParam, status: statusParam } = await searchParams;
   const selectedCategory = categoryParam || "All";
   const selectedStatus = statusParam || "All";
 
   let polls: Poll[] = [];
+  let categoryFilters: string[] = ["All", ...DEFAULT_POLL_CATEGORIES.slice(0, 6)];
 
   try {
-    const dbPolls = await getPublishedPolls({
-      category: selectedCategory !== "All" ? selectedCategory : undefined,
-      limit: 50,
-    });
+    const [dbPolls, distinctCategories] = await Promise.all([
+      getPublishedPolls({
+        category: selectedCategory !== "All" ? selectedCategory : undefined,
+        limit: 50,
+      }),
+      PollModel.distinct("category", { status: "published" }).catch(() => []),
+    ]);
 
     if (dbPolls && dbPolls.length > 0) {
       polls = dbPolls;
     }
+
+    categoryFilters = Array.from(
+      new Set(["All", ...DEFAULT_POLL_CATEGORIES.slice(0, 6), ...distinctCategories])
+    );
   } catch {
     polls = [];
   }
@@ -88,7 +87,7 @@ export default async function PollsListingPage({ searchParams }: PollsPageProps)
 
             {/* Category Filter Navigation */}
             <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-              {CATEGORIES.map((cat) => {
+              {categoryFilters.map((cat) => {
                 const isActive = selectedCategory === cat;
                 return (
                   <Link

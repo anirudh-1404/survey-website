@@ -128,16 +128,8 @@ export async function POST(request: NextRequest) {
       errors.title = "Question/title must be at least 10 characters long";
     }
 
-    const validCategories = [
-      "Technology & AI",
-      "Global Economy",
-      "Geopolitics",
-      "Climate & Energy",
-      "Society & Culture",
-      "Health & Science",
-    ];
-    if (!category || typeof category !== "string" || !validCategories.includes(category)) {
-      errors.category = "Please select a valid policy category";
+    if (!category || typeof category !== "string" || category.trim().length < 2) {
+      errors.category = "Please select or enter a valid category (at least 2 characters)";
     }
 
     if (!summary || typeof summary !== "string" || summary.trim().length < 20) {

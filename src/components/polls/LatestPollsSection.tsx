@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Poll, PollCategory } from "@/types/poll";
+import { Poll, PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollCard } from "./PollCard";
 import { Filter, Layers } from "lucide-react";
 import { AdBanner } from "@/components/ads/AdBanner";
@@ -10,19 +10,28 @@ interface LatestPollsSectionProps {
   polls: Poll[];
 }
 
-const CATEGORIES: ("All" | PollCategory)[] = [
-  "All",
-  "Technology & AI",
-  "Global Economy",
-  "Climate & Energy",
-  "Society & Culture",
-  "Geopolitics",
-  "Health & Science",
-];
-
 export function LatestPollsSection({ polls }: LatestPollsSectionProps) {
   const [selectedCategory, setSelectedCategory] = useState<"All" | PollCategory>("All");
   const [statusFilter, setStatusFilter] = useState<"All" | "Open" | "Closed">("All");
+
+  const categories = useMemo(() => {
+    const list: string[] = ["All"];
+    const unique = new Set<string>();
+    polls.forEach((p) => {
+      if (p.category) unique.add(p.category);
+    });
+    DEFAULT_POLL_CATEGORIES.forEach((c) => {
+      if (unique.has(c)) {
+        list.push(c);
+        unique.delete(c);
+      }
+    });
+    unique.forEach((c) => list.push(c));
+    if (list.length === 1) {
+      return ["All", ...DEFAULT_POLL_CATEGORIES.slice(0, 6)];
+    }
+    return list;
+  }, [polls]);
 
   const filteredPolls = useMemo(() => {
     return polls.filter((poll) => {
@@ -82,7 +91,7 @@ export function LatestPollsSection({ polls }: LatestPollsSectionProps) {
             <Filter className="h-3 w-3 text-zinc-400" />
             Topic:
           </span>
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <button
               key={category}
               type="button"

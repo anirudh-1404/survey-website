@@ -1,12 +1,23 @@
 export type PollStatus = "Open" | "Closed" | "Live" | "Draft";
 
-export type PollCategory =
-  | "Technology & AI"
-  | "Global Economy"
-  | "Geopolitics"
-  | "Climate & Energy"
-  | "Society & Culture"
-  | "Health & Science";
+export const DEFAULT_POLL_CATEGORIES = [
+  "Technology & AI",
+  "Global Economy",
+  "Geopolitics",
+  "Climate & Energy",
+  "Society & Culture",
+  "Health & Science",
+  "Entertainment & Cinema",
+  "Politics & Governance",
+  "Sports & Games",
+  "Religion & Mythology",
+  "Education & Career",
+  "Business & Startups",
+  "Crime & Justice",
+  "Lifestyle & Travel",
+] as const;
+
+export type PollCategory = string;
 
 export interface PollOption {
   id: string;
