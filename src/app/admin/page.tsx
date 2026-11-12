@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import { User } from "@/models/User";
+import { getSiteAnalytics } from "@/lib/analytics";
 import {
   Layers,
   CheckCircle2,
@@ -11,24 +12,40 @@ import {
   ArrowRight,
   ExternalLink,
   Edit,
+  Globe,
+  Eye,
 } from "lucide-react";
 
 export default async function AdminOverviewPage() {
   await connectToDatabase();
 
-  const [totalPolls, publishedPolls, draftPolls, closedPolls, totalUsers, recentPolls] =
-    await Promise.all([
-      PollModel.countDocuments(),
-      PollModel.countDocuments({ status: "published" }),
-      PollModel.countDocuments({ status: "draft" }),
-      PollModel.countDocuments({ status: "closed" }),
-      User.countDocuments(),
-      PollModel.find()
-        .sort({ createdAt: -1 })
-        .limit(6)
-        .populate("createdBy", "name email")
-        .lean(),
-    ]);
+  const [
+    totalPolls,
+    publishedPolls,
+    draftPolls,
+    closedPolls,
+    totalUsers,
+    siteAnalytics,
+    pollViewsAgg,
+    recentPolls,
+  ] = await Promise.all([
+    PollModel.countDocuments(),
+    PollModel.countDocuments({ status: "published" }),
+    PollModel.countDocuments({ status: "draft" }),
+    PollModel.countDocuments({ status: "closed" }),
+    User.countDocuments(),
+    getSiteAnalytics(),
+    PollModel.aggregate([
+      { $group: { _id: null, totalViews: { $sum: "$views" } } },
+    ]),
+    PollModel.find()
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .populate("createdBy", "name email")
+      .lean(),
+  ]);
+
+  const totalPollViews = pollViewsAgg[0]?.totalViews || 0;
 
   return (
     <div className="space-y-8">
@@ -55,7 +72,37 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Summary Cards with Real MongoDB Counts */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* Website Traffic */}
+        <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Website Visits</span>
+            <Globe className="h-4 w-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-white font-mono">
+            {siteAnalytics.totalVisits.toLocaleString()}
+          </p>
+          <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
+            <span>+{siteAnalytics.todayVisits.toLocaleString()} today</span>
+            <span className="text-[10px] text-emerald-400 font-medium">Traffic</span>
+          </div>
+        </div>
+
+        {/* Total Poll Views */}
+        <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Poll Views</span>
+            <Eye className="h-4 w-4 text-rose-400" />
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-white font-mono">
+            {totalPollViews.toLocaleString()}
+          </p>
+          <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
+            <span>Across surveys</span>
+            <span className="text-[10px] text-rose-400 font-medium">Views</span>
+          </div>
+        </div>
+
         {/* Total Polls */}
         <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
@@ -66,7 +113,7 @@ export default async function AdminOverviewPage() {
             {totalPolls}
           </p>
           <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
-            <span>In database catalog</span>
+            <span>In catalog</span>
             <span className="text-[10px] text-emerald-400 font-medium">Live DB</span>
           </div>
         </div>
@@ -96,7 +143,7 @@ export default async function AdminOverviewPage() {
             {draftPolls}
           </p>
           <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
-            <span>{closedPolls} closed archives</span>
+            <span>{closedPolls} closed</span>
             <span className="text-[10px] text-amber-400/80 uppercase">Private</span>
           </div>
         </div>
@@ -150,6 +197,7 @@ export default async function AdminOverviewPage() {
                   <th className="pb-3 pr-4">Survey Title</th>
                   <th className="pb-3 px-4">Category</th>
                   <th className="pb-3 px-4">Status</th>
+                  <th className="pb-3 px-4">Views</th>
                   <th className="pb-3 px-4">Created Date</th>
                   <th className="pb-3 pl-4 text-right">Actions</th>
                 </tr>
@@ -161,6 +209,52 @@ export default async function AdminOverviewPage() {
 
                   return (
                     <tr key={poll._id.toString()} className="hover:bg-white/[0.02]">
+                      <td className="py-3.5 pr-4 max-w-xs font-medium text-white truncate">
+                        {isPublished ? (
+                          <Link
+                            href={`/polls/${poll.slug}`}
+                            className="hover:text-rose-400 transition-colors"
+                            target="_blank"
+                          >
+                            {poll.title}
+                          </Link>
+                        ) : (
+                          <span>{poll.title}</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-zinc-300 uppercase">
+                          {poll.category}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                            isPublished
+                              ? "border border-emerald-500/30 bg-emerald-950/20 text-emerald-300"
+                              : isDraft
+                              ? "border border-amber-500/30 bg-amber-950/20 text-amber-300"
+                              : "border border-zinc-700 bg-zinc-800 text-zinc-400"
+                          }`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              isPublished
+                                ? "bg-emerald-400"
+                                : isDraft
+                                ? "bg-amber-400"
+                                : "bg-zinc-500"
+                            }`}
+                          />
+                          {poll.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono whitespace-nowrap text-zinc-300">
+                        <div className="flex items-center gap-1.5">
+                          <Eye className="h-3.5 w-3.5 text-zinc-400" />
+                          <span>{(poll.views || 0).toLocaleString()}</span>
+                        </div>
+                      </td>
                       <td className="py-3.5 pr-4 max-w-xs font-medium text-white truncate">
                         {isPublished ? (
                           <Link

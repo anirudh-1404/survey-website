@@ -52,6 +52,7 @@ export interface Poll {
   closesAt?: string;
   options: PollOption[];
   featured?: boolean;
+  views?: number;
   editorialNote?: string;
   sourceReference?: string;
   commentsCount?: number;

@@ -66,6 +66,7 @@ export const viewport: Viewport = {
 };
 
 import { Toaster } from "sonner";
+import { SiteVisitorTracker } from "@/components/analytics/SiteVisitorTracker";
 
 export default function RootLayout({
   children,
@@ -78,6 +79,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#090a0f] text-[#f4f4f7] selection:bg-rose-900 selection:text-white">
+        <SiteVisitorTracker />
         {children}
         <Toaster
           position="top-right"

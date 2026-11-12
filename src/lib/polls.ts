@@ -120,6 +120,7 @@ export function mapPollToUI(
       : new Date(p.createdAt).toISOString(),
     closesAt: p.closesAt ? new Date(p.closesAt).toISOString() : undefined,
     featured: p.featured || false,
+    views: p.views || 0,
     editorialNote: p.editorialNote,
     sourceReference: p.sourceReference,
     imageUrl: p.imageUrl || undefined,
@@ -242,4 +243,24 @@ export async function getAdminPollById(
   }
 
   return await PollModel.findOne(filter).populate("createdBy", "name email");
+}
+
+/**
+ * Increment view count for a poll asynchronously.
+ */
+export async function incrementPollViews(
+  identifier: string | mongoose.Types.ObjectId
+): Promise<void> {
+  if (!identifier) return;
+  try {
+    await connectToDatabase();
+    const isObjectId = mongoose.Types.ObjectId.isValid(identifier);
+    const filter: Record<string, unknown> = isObjectId
+      ? { _id: new mongoose.Types.ObjectId(identifier) }
+      : { slug: identifier };
+
+    await PollModel.updateOne(filter, { $inc: { views: 1 } });
+  } catch (err) {
+    console.error("[incrementPollViews] Failed to record poll view:", err);
+  }
 }

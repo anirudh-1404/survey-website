@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
         summary: p.summary,
         status: p.status,
         featured: p.featured,
+        views: p.views || 0,
         publishedAt: p.publishedAt ? new Date(p.publishedAt).toISOString() : null,
         closesAt: p.closesAt ? new Date(p.closesAt).toISOString() : null,
         createdAt: new Date(p.createdAt).toISOString(),

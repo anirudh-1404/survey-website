@@ -13,6 +13,7 @@ import {
   Globe,
   Archive,
   RefreshCw,
+  Eye,
 } from "lucide-react";
 
 interface AdminPollItem {
@@ -23,6 +24,7 @@ interface AdminPollItem {
   summary: string;
   status: "draft" | "published" | "closed";
   featured: boolean;
+  views?: number;
   publishedAt: string | null;
   closesAt: string | null;
   createdAt: string;
@@ -221,6 +223,7 @@ export default function AdminPollsPage() {
                 <th className="py-3.5 px-4 sm:px-6">Question / Title</th>
                 <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Views</th>
                 <th className="py-3.5 px-4">Published Date</th>
                 <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
               </tr>
@@ -228,14 +231,14 @@ export default function AdminPollsPage() {
             <tbody className="divide-y divide-white/5 text-zinc-300">
               {isLoading && polls.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-zinc-400">
+                  <td colSpan={6} className="py-12 text-center text-zinc-400">
                     <Loader2 className="mx-auto h-5 w-5 animate-spin text-rose-500 mb-2" />
                     <span>Loading database records...</span>
                   </td>
                 </tr>
               ) : polls.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-zinc-500">
+                  <td colSpan={6} className="py-12 text-center text-zinc-500">
                     No polls found matching the current criteria. Click &quot;New Survey Draft&quot; to formulate a question.
                   </td>
                 </tr>
@@ -307,6 +310,13 @@ export default function AdminPollsPage() {
                             }`}
                           />
                           {poll.status}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 rounded bg-white/5 px-2 py-0.5 font-mono text-[11px] text-zinc-300">
+                          <Eye className="h-3 w-3 text-rose-400" />
+                          {(poll.views || 0).toLocaleString()}
                         </span>
                       </td>
 

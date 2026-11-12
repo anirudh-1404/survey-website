@@ -20,6 +20,7 @@ export interface IPoll extends Document {
   publishedAt?: Date;
   closesAt?: Date;
   featured: boolean;
+  views: number;
   options: IPollOption[];
   imageUrl?: string;
   cloudinaryPublicId?: string;
@@ -121,6 +122,11 @@ const PollSchema = new Schema<IPoll>(
       type: Boolean,
       default: false,
       index: true,
+    },
+    views: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     options: {
       type: [PollOptionSchema],

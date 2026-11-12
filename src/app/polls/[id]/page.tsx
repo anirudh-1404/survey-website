@@ -8,6 +8,7 @@ import { PollDetailInteractive } from "@/components/polls/PollDetailInteractive"
 import {
   getPublicPollByIdOrSlug,
   getPublishedPolls,
+  incrementPollViews,
 } from "@/lib/polls";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserVote } from "@/lib/votes";
@@ -77,6 +78,9 @@ export default async function PollDetailPage({ params }: PollPageProps) {
   if (!poll) {
     notFound();
   }
+
+  // Increment view count asynchronously
+  incrementPollViews(id);
 
   // Check authenticated user vote state
   const currentUser = await getCurrentUser();
