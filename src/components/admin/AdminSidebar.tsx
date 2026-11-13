@@ -77,6 +77,12 @@ export function AdminSidebar({
       icon: Megaphone,
       exact: false,
     },
+    {
+      label: "Admin Management",
+      href: "/admin/admins",
+      icon: ShieldCheck,
+      exact: false,
+    },
   ];
 
   const content = (
