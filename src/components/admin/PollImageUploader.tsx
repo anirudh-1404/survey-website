@@ -95,7 +95,7 @@ export function PollImageUploader({
       onChange({
         imageUrl: data.data.url,
         cloudinaryPublicId: data.data.publicId,
-        imageAlt: altInput.trim() || file.name.replace(/\.[^/.]+$/, ""),
+        imageAlt: altInput.trim(),
       });
     } catch {
       setUploadError(

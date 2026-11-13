@@ -67,11 +67,6 @@ export function PollImage({
             onError={() => setHasError(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#10121a]/80 via-transparent to-transparent pointer-events-none" />
-          {imageAlt && imageAlt !== title && (
-            <div className="absolute bottom-2 right-2 max-w-[80%] truncate rounded bg-black/70 px-2 py-0.5 text-[10px] text-zinc-300 backdrop-blur-sm border border-white/10">
-              {imageAlt}
-            </div>
-          )}
         </>
       ) : (
         /* Graceful editorial placeholder when image is absent or fails to load */
