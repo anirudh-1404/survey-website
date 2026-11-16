@@ -12,6 +12,13 @@ import { BlogPost } from "@/types/blog";
 import { Poll } from "@/types/poll";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { connection } from "next/server";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  verification: {
+    google: "JH-bwIEmWDLC_gWX9_rKyU5DTzSJjLf2ftQoVeewtsM",
+  },
+};
 
 export const instant = false;
 
