@@ -15,6 +15,9 @@ import { connection } from "next/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  title: "SayNow — Public Opinion on Global Issues",
+  description:
+    "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
   verification: {
     google: "JH-bwIEmWDLC_gWX9_rKyU5DTzSJjLf2ftQoVeewtsM",
   },

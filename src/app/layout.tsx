@@ -81,6 +81,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
+      <head>
+        <meta
+          name="google-site-verification"
+          content="JH-bwIEmWDLC_gWX9_rKyU5DTzSJjLf2ftQoVeewtsM"
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-[#090a0f] text-[#f4f4f7] selection:bg-rose-900 selection:text-white">
         <SiteVisitorTracker />
         {children}
