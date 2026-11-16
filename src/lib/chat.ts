@@ -197,6 +197,12 @@ export async function getPollChatHistory(
         ? { isFlagged: Boolean(doc.isFlagged), reason: doc.flagReason }
         : checkContentModeration(doc.content);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const guestName = (doc as any).guestName;
+      const authorName = author?.name || guestName || "Guest Citizen";
+      const authorId = author?._id ? author._id.toString() : (guestName ? `guest_${doc._id.toString().slice(-4)}` : "unknown");
+      const authorRole = author?.role || "user";
+
       return {
         id: doc._id.toString(),
         pollId: doc.pollId.toString(),
@@ -204,9 +210,9 @@ export async function getPollChatHistory(
         createdAt: doc.createdAt.toISOString(),
         status: doc.status,
         author: {
-          id: author?._id ? author._id.toString() : "unknown",
-          name: author?.name || "Anonymous Citizen",
-          role: author?.role || "user",
+          id: authorId,
+          name: authorName,
+          role: authorRole,
         },
         reactions: summarizeReactions(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -231,8 +237,9 @@ export async function getPollChatHistory(
  */
 export async function createChatMessage(
   pollIdentifier: string,
-  authorId: string,
-  rawContent: string
+  authorId?: string | null,
+  rawContent: string = "",
+  guestName?: string | null
 ): Promise<ChatMessage> {
   await connectToDatabase();
 
@@ -246,8 +253,10 @@ export async function createChatMessage(
     throw new ChatError("Chat message cannot exceed 1000 characters.", 400);
   }
 
-  // Rate limiting (max 15 messages/min per user)
-  const rateLimitKey = `chat:${authorId}`;
+  // Rate limiting (max 15 messages/min per user / guest)
+  const rateLimitKey = authorId
+    ? `chat:${authorId}`
+    : `chat:guest:${(guestName || "anon").trim().toLowerCase().replace(/\s+/g, "_")}`;
   const rateLimit = checkRateLimit(rateLimitKey, 15, 60 * 1000);
   if (!rateLimit.allowed) {
     throw new ChatError(
@@ -275,30 +284,51 @@ export async function createChatMessage(
     throw new ChatError("Chat is not available for draft surveys.", 403);
   }
 
-  // Verify author
-  const author = await UserModel.findById(authorId).select("_id name role status").lean();
-  if (!author) {
-    throw new ChatError("Author account not found.", 401);
-  }
+  // Author verification: authenticated user or verified guest name
+  let authorUser: { _id: mongoose.Types.ObjectId; name: string; role: "user" | "admin" } | null = null;
+  let finalGuestName: string | null = null;
 
-  if (author.status === "suspended") {
-    throw new ChatError("Account is suspended from public discourse.", 403);
+  if (authorId) {
+    const author = await UserModel.findById(authorId).select("_id name role status").lean();
+    if (!author) {
+      throw new ChatError("Author account not found.", 401);
+    }
+    if (author.status === "suspended") {
+      throw new ChatError("Account is suspended from public discourse.", 403);
+    }
+    authorUser = author;
+  } else {
+    finalGuestName = (guestName || "").trim();
+    if (!finalGuestName) {
+      throw new ChatError("Please enter your name before starting the chat.", 400);
+    }
+    if (finalGuestName.length > 50) {
+      finalGuestName = finalGuestName.slice(0, 50);
+    }
   }
 
   // Content moderation analysis for abusive words, crime terms, or adult content
   const moderation = checkContentModeration(content);
 
   // Persist message in MongoDB
-  const createdDoc: IChatMessage = await ChatMessageModel.create({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const docToCreate: any = {
     pollId: poll._id,
-    authorId: author._id,
     content,
     status: "visible",
     reactions: [],
     isFlagged: moderation.isFlagged,
     flagReason: moderation.reason,
     flaggedWords: moderation.flaggedWords,
-  });
+  };
+
+  if (authorUser) {
+    docToCreate.authorId = authorUser._id;
+  } else {
+    docToCreate.guestName = finalGuestName;
+  }
+
+  const createdDoc = await ChatMessageModel.create(docToCreate);
 
   const messagePayload: ChatMessage = {
     id: createdDoc._id.toString(),
@@ -307,9 +337,9 @@ export async function createChatMessage(
     createdAt: createdDoc.createdAt.toISOString(),
     status: "visible",
     author: {
-      id: author._id.toString(),
-      name: author.name,
-      role: author.role,
+      id: authorUser ? authorUser._id.toString() : `guest_${createdDoc._id.toString().slice(-4)}`,
+      name: authorUser ? authorUser.name : (finalGuestName || "Guest Citizen"),
+      role: authorUser ? authorUser.role : "user",
     },
     reactions: [],
     isFlagged: moderation.isFlagged,
@@ -447,7 +477,7 @@ export async function deleteChatMessage(
   }
 
   // Permission check: Owner or Admin
-  const isOwner = message.authorId.toString() === userId;
+  const isOwner = Boolean(message.authorId && message.authorId.toString() === userId);
   const isAdmin = userRole === "admin";
 
   if (!isOwner && !isAdmin) {

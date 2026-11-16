@@ -11,6 +11,14 @@ import {
 } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  return createErrorResponse(
+    "Public registration is temporarily disabled. You can vote and chat on SayNow without creating an account!",
+    403
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function POST_DISABLED(request: NextRequest) {
   try {
     // 1. CSRF Protection
     if (!verifyCsrfOrigin(request)) {

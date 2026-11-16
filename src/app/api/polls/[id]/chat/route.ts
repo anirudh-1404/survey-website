@@ -69,8 +69,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // 2. Authenticate user
-    const session = await requireAuth();
+    // 2. Identify session user if logged in
+    const session = await getCurrentUser();
 
     // 3. IP-based rate limiting as an additional defense-in-depth layer
     const ip =
@@ -97,11 +97,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    let guestName: string | undefined = undefined;
+    if (!session?.user?.id) {
+      if (!body.guestName || typeof body.guestName !== "string" || !body.guestName.trim()) {
+        return NextResponse.json(
+          { success: false, error: "Please enter your name before starting the chat." },
+          { status: 400 }
+        );
+      }
+      guestName = body.guestName.trim().slice(0, 50);
+    }
+
     // 5. Create, persist, and broadcast message
     const message = await createChatMessage(
       id,
-      session.user.id,
-      body.content
+      session?.user?.id || null,
+      body.content,
+      guestName
     );
 
     return NextResponse.json(

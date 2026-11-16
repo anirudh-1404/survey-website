@@ -19,6 +19,16 @@ interface FeaturedPollProps {
   poll: Poll;
 }
 
+function getOrCreateVoterId(): string {
+  if (typeof window === "undefined") return "";
+  let vid = localStorage.getItem("saynow_vid");
+  if (!vid) {
+    vid = "v_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem("saynow_vid", vid);
+  }
+  return vid;
+}
+
 export function FeaturedPoll({ poll }: FeaturedPollProps) {
   const [optionsState, setOptionsState] = useState<PollOption[]>(poll.options);
   const [totalVotes, setTotalVotes] = useState(poll.totalVotes);
@@ -34,6 +44,19 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
   // Check auth and current vote status on mount
   useEffect(() => {
     let isMounted = true;
+
+    // Check local storage vote for guest
+    if (typeof window !== "undefined") {
+      const localVote = localStorage.getItem(`voted_poll_${poll.id}`);
+      if (localVote) {
+        setHasVoted(true);
+        const optMatch = poll.options.find(
+          (o) => o.id === `opt-${localVote}` || o.id === localVote
+        );
+        if (optMatch) setSelectedOption(optMatch.id);
+      }
+    }
+
     async function checkStatus() {
       try {
         const [meRes, voteRes] = await Promise.all([
@@ -95,14 +118,6 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
   }, [poll.id, poll.options]);
 
   const handleVote = async (optionId: string) => {
-    if (isAuthenticated === false) {
-      setFeedback({
-        type: "info",
-        message: "Please sign in to verify your identity and cast your ballot.",
-      });
-      return;
-    }
-
     if (hasVoted) {
       setFeedback({
         type: "info",
@@ -114,16 +129,23 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
     setIsSubmitting(true);
     setFeedback(null);
     const optionKey = optionId.replace(/^opt-/, "").toLowerCase();
+    const voterId = getOrCreateVoterId();
 
     try {
       const res = await fetch(`/api/polls/${poll.id}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ option: optionKey }),
+        body: JSON.stringify({ option: optionKey, voterId }),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 409) {
+          setHasVoted(true);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(`voted_poll_${poll.id}`, optionKey);
+          }
+        }
         setFeedback({
           type: "error",
           message: data.error || "Failed to record your vote.",
@@ -134,6 +156,9 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
 
       setHasVoted(true);
       setSelectedOption(optionId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`voted_poll_${poll.id}`, optionKey);
+      }
       setFeedback({
         type: "success",
         message: "Your ballot has been securely registered and tallied.",
@@ -368,26 +393,6 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
                   </div>
                 )}
 
-                {isAuthenticated === false && !hasVoted && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-xs">
-                    <span className="text-zinc-400">Sign in to participate:</span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Link
-                        href={`/login?redirect=${encodeURIComponent("/")}`}
-                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded bg-rose-600 px-3 py-1.5 font-semibold text-white hover:bg-rose-500 transition-colors"
-                      >
-                        <LogIn className="h-3 w-3 shrink-0" />
-                        <span className="whitespace-nowrap">Log In</span>
-                      </Link>
-                      <Link
-                        href="/register"
-                        className="whitespace-nowrap rounded border border-white/15 px-3 py-1.5 font-medium text-zinc-300 hover:text-white transition-colors"
-                      >
-                        Register
-                      </Link>
-                    </div>
-                  </div>
-                )}
 
                 {isSubmitting && (
                   <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 py-1">

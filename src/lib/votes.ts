@@ -172,12 +172,17 @@ export async function getBatchPollVoteResults(
   return resultsMap;
 }
 
+export interface UserVoteIdentifier {
+  userId?: string | mongoose.Types.ObjectId;
+  voterId?: string;
+}
+
 /**
- * Check if a specific user has cast a ballot on a poll.
+ * Check if a specific user or guest has cast a ballot on a poll.
  */
 export async function getUserVote(
   pollId: string | mongoose.Types.ObjectId,
-  userId: string | mongoose.Types.ObjectId
+  identifier?: string | mongoose.Types.ObjectId | UserVoteIdentifier
 ): Promise<{ hasVoted: boolean; option?: string } | null> {
   await connectToDatabase();
 
@@ -185,26 +190,35 @@ export async function getUserVote(
     typeof pollId === "string"
       ? mongoose.Types.ObjectId.isValid(pollId)
       : Boolean(pollId);
-  const userValid =
-    typeof userId === "string"
-      ? mongoose.Types.ObjectId.isValid(userId)
-      : Boolean(userId);
 
-  if (!pollValid || !userValid) {
+  if (!pollValid || !identifier) {
     return { hasVoted: false };
   }
 
   const pollObjectId =
     typeof pollId === "string" ? new mongoose.Types.ObjectId(pollId) : pollId;
-  const userObjectId =
-    typeof userId === "string" ? new mongoose.Types.ObjectId(userId) : userId;
 
-  const vote = await VoteModel.findOne({
-    pollId: pollObjectId,
-    userId: userObjectId,
-  })
-    .select("option")
-    .lean();
+  let query: Record<string, unknown> | null = null;
+
+  if (typeof identifier === "string" || identifier instanceof mongoose.Types.ObjectId) {
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      query = { pollId: pollObjectId, userId: new mongoose.Types.ObjectId(identifier) };
+    } else {
+      query = { pollId: pollObjectId, voterId: String(identifier) };
+    }
+  } else if (typeof identifier === "object") {
+    if (identifier.userId && mongoose.Types.ObjectId.isValid(identifier.userId)) {
+      query = { pollId: pollObjectId, userId: new mongoose.Types.ObjectId(identifier.userId) };
+    } else if (identifier.voterId) {
+      query = { pollId: pollObjectId, voterId: identifier.voterId };
+    }
+  }
+
+  if (!query) {
+    return { hasVoted: false };
+  }
+
+  const vote = await VoteModel.findOne(query).select("option").lean();
 
   if (!vote) {
     return { hasVoted: false };
@@ -218,12 +232,15 @@ export async function getUserVote(
 
 /**
  * Cast a vote on a poll.
+ * Supports both registered users and guest visitors.
  * Validates poll status, deadline, and option.
- * Relies on the unique compound database index to prevent duplicate votes under concurrency.
+ * Relies on compound indexes to prevent duplicate votes under concurrency.
  */
 export async function castVote(params: {
   pollIdentifier: string; // slug or ObjectId
-  userId: string;
+  userId?: string;
+  voterId?: string;
+  ipAddress?: string;
   option: string;
 }): Promise<{
   success: boolean;
@@ -232,12 +249,13 @@ export async function castVote(params: {
 }> {
   await connectToDatabase();
 
-  // Ensure database indexes are synchronized
-  await VoteModel.init();
-
   const cleanOption = (params.option || "").trim().toLowerCase();
   if (!cleanOption) {
     throw new VoteError("A valid vote option must be specified", 422);
+  }
+
+  if (!params.userId && !params.voterId) {
+    throw new VoteError("A voter identifier is required to register a ballot.", 400);
   }
 
   // 1. Locate the poll by slug or ObjectId
@@ -281,11 +299,34 @@ export async function castVote(params: {
     );
   }
 
-  // 6. Insert vote record using the session's verified user ID
+  // 6. Check existing vote if user or voterId already voted
+  if (params.userId && mongoose.Types.ObjectId.isValid(params.userId)) {
+    const existing = await VoteModel.findOne({
+      pollId: poll._id,
+      userId: new mongoose.Types.ObjectId(params.userId),
+    });
+    if (existing) {
+      throw new VoteError("You have already cast your ballot on this inquiry.", 409);
+    }
+  } else if (params.voterId) {
+    const existing = await VoteModel.findOne({
+      pollId: poll._id,
+      voterId: params.voterId,
+    });
+    if (existing) {
+      throw new VoteError("You have already cast your ballot on this inquiry.", 409);
+    }
+  }
+
+  // 7. Insert vote record
   try {
     await VoteModel.create({
       pollId: poll._id,
-      userId: new mongoose.Types.ObjectId(params.userId),
+      userId: params.userId && mongoose.Types.ObjectId.isValid(params.userId)
+        ? new mongoose.Types.ObjectId(params.userId)
+        : undefined,
+      voterId: params.voterId || undefined,
+      ipAddress: params.ipAddress || undefined,
       option: cleanOption,
     });
   } catch (err: unknown) {
@@ -300,7 +341,7 @@ export async function castVote(params: {
     throw err;
   }
 
-  // 7. Calculate and return fresh live aggregated results
+  // 8. Calculate and return fresh live aggregated results
   const updatedResults = await getPollVoteResults(poll._id);
 
   return {

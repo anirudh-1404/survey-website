@@ -48,6 +48,16 @@ interface PollDetailInteractiveProps {
   } | null;
 }
 
+function getOrCreateVoterId(): string {
+  if (typeof window === "undefined") return "";
+  let vid = localStorage.getItem("saynow_vid");
+  if (!vid) {
+    vid = "v_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem("saynow_vid", vid);
+  }
+  return vid;
+}
+
 export function PollDetailInteractive({
   poll,
   isAuthenticated = false,
@@ -56,10 +66,18 @@ export function PollDetailInteractive({
   isClosed = false,
   currentUser,
 }: PollDetailInteractiveProps) {
-  // Ensure the page always starts at the top when opened
+  // Ensure the page always starts at the top when opened and check local voted state
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-  }, []);
+    if (!isAuthenticated && !initialHasVoted && typeof window !== "undefined") {
+      const localVote = localStorage.getItem(`voted_poll_${poll.id}`);
+      if (localVote) {
+        setHasVoted(true);
+        setUserVote(localVote);
+        setSelectedOption(localVote);
+      }
+    }
+  }, [poll.id, isAuthenticated, initialHasVoted]);
 
   // --- Voting State ---
   const [hasVoted, setHasVoted] = useState(initialHasVoted);
@@ -75,21 +93,12 @@ export function PollDetailInteractive({
   const [optionsState, setOptionsState] = useState<PollOption[]>(poll.options);
   const [copiedLink, setCopiedLink] = useState(false);
 
-
-
   // --- Voting Handler ---
   const handleCastVote = async (optionKeyInput?: string) => {
     const targetKey = optionKeyInput || selectedOption;
     if (!targetKey) {
       const msg = "Please select an answer choice before casting your ballot.";
       setFeedback({ type: "error", message: msg });
-      toast.error(msg);
-      return;
-    }
-
-    if (!isAuthenticated) {
-      const msg = "Authentication required: Please sign in to verify your identity and cast your ballot.";
-      setFeedback({ type: "info", message: msg });
       toast.error(msg);
       return;
     }
@@ -114,6 +123,7 @@ export function PollDetailInteractive({
     setFeedback(null);
 
     const cleanKey = targetKey.replace(/^opt-/, "").toLowerCase();
+    const voterId = getOrCreateVoterId();
 
     try {
       const response = await fetch(`/api/polls/${poll.id}/vote`, {
@@ -121,7 +131,7 @@ export function PollDetailInteractive({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ option: cleanKey }),
+        body: JSON.stringify({ option: cleanKey, voterId }),
       });
 
       const data = await response.json();
@@ -130,6 +140,9 @@ export function PollDetailInteractive({
         setHasVoted(true);
         setUserVote(cleanKey);
         setSelectedOption(cleanKey);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`voted_poll_${poll.id}`, cleanKey);
+        }
 
         if (data.data?.results) {
           const r = data.data.results;
@@ -157,6 +170,9 @@ export function PollDetailInteractive({
         toast.success(successMsg);
       } else if (response.status === 409) {
         setHasVoted(true);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`voted_poll_${poll.id}`, cleanKey);
+        }
         const conflictMsg = data.error || "You have already cast your ballot on this inquiry.";
         setFeedback({
           type: "error",
@@ -500,32 +516,6 @@ export function PollDetailInteractive({
               </div>
             )}
 
-            {/* Unauthenticated Prompt */}
-            {!isAuthenticated && !hasVoted && (
-              <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3.5 text-xs space-y-2">
-                <div className="flex items-center gap-1.5 text-zinc-300 font-semibold">
-                  <LogIn className="h-3.5 w-3.5 text-rose-400" />
-                  <span>Citizen Authentication Required</span>
-                </div>
-                <p className="text-zinc-400">
-                  Please sign in to ensure one non-duplicable ballot per citizen.
-                </p>
-                <div className="flex items-center gap-2 pt-1">
-                  <Link
-                    href={`/login?redirect=${encodeURIComponent(`/polls/${poll.id}`)}`}
-                    className="flex-1 text-center whitespace-nowrap rounded bg-rose-600 py-1.5 px-3 text-xs font-semibold text-white hover:bg-rose-500 transition-colors"
-                  >
-                    Log In
-                  </Link>
-                  <Link
-                    href={`/register?redirect=${encodeURIComponent(`/polls/${poll.id}`)}`}
-                    className="flex-1 text-center whitespace-nowrap rounded border border-white/15 py-1.5 px-3 text-xs font-medium text-zinc-300 hover:text-white transition-colors"
-                  >
-                    Register
-                  </Link>
-                </div>
-              </div>
-            )}
 
             {/* Integrity / Share Actions */}
             <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-zinc-400">

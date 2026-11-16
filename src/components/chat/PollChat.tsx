@@ -10,6 +10,7 @@ import {
   LogIn,
   Flame,
   Trash2,
+  MessageSquare,
 } from "lucide-react";
 import { ChatMessage, ChatReactionSummary } from "@/types/chat";
 import { toast } from "sonner";
@@ -66,6 +67,21 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [activeReactionMessageId, setActiveReactionMessageId] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // Guest chatter name state
+  const [guestName, setGuestName] = useState<string>("");
+  const [nameInput, setNameInput] = useState<string>("");
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("saynow_chat_name") || "";
+      if (saved) {
+        setGuestName(saved);
+        setNameInput(saved);
+      }
+    }
+  }, []);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -208,8 +224,9 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
     e.preventDefault();
     if (!inputContent.trim() || isSending) return;
 
-    if (!currentUser) {
-      toast.error("Please sign in to participate in the live chat.");
+    if (!currentUser && !guestName.trim()) {
+      setIsEditingName(true);
+      toast.error("Please enter your name before starting the chat.");
       return;
     }
 
@@ -220,7 +237,10 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
       const res = await fetch(`/api/polls/${pollId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: trimmed }),
+        body: JSON.stringify({
+          content: trimmed,
+          guestName: currentUser ? undefined : guestName.trim(),
+        }),
       });
 
       const data = await res.json();
@@ -387,7 +407,9 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
           </div>
         ) : (
           messages.map((message) => {
-            const isMe = currentUser?.id === message.author.id;
+            const isMe = currentUser
+              ? currentUser.id === message.author.id
+              : Boolean(guestName && message.author.name.toLowerCase() === guestName.trim().toLowerCase());
             const isFlagged = message.isFlagged === true;
             const initials = (message.author.name || "A")
               .split(" ")
@@ -553,27 +575,64 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
 
       {/* Chat Input & Authentication Controls */}
       <div className="p-3 border-t border-white/10 bg-white/[0.02]">
-        {!currentUser ? (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs">
-            <span className="text-zinc-400">Sign in to participate in the live public chat:</span>
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href={`/login?redirect=${encodeURIComponent(`/polls/${pollId}`)}`}
-                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded bg-rose-600 px-3 py-1.5 font-semibold text-white hover:bg-rose-500 transition-colors shadow-sm"
-              >
-                <LogIn className="h-3 w-3 shrink-0" />
-                <span className="whitespace-nowrap">Log In</span>
-              </Link>
-              <Link
-                href={`/register?redirect=${encodeURIComponent(`/polls/${pollId}`)}`}
-                className="whitespace-nowrap rounded border border-white/15 px-3 py-1.5 font-medium text-zinc-300 hover:text-white transition-colors"
-              >
-                Register
-              </Link>
+        {!currentUser && (!guestName || isEditingName) ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 text-xs space-y-3">
+            <div className="flex items-center gap-2 text-zinc-300 font-medium">
+              <MessageSquare className="h-4 w-4 text-rose-500" />
+              <span>Please enter your name before starting the chat</span>
             </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = nameInput.trim();
+                if (!trimmed) {
+                  toast.error("Please enter your name to join the chat");
+                  return;
+                }
+                setGuestName(trimmed);
+                setIsEditingName(false);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("saynow_chat_name", trimmed);
+                }
+                toast.success(`Welcome to the chat, ${trimmed}!`);
+              }}
+              className="flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="Enter your name (e.g. Priya Sharma)..."
+                maxLength={40}
+                className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={!nameInput.trim()}
+                className="rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-40 transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+              >
+                Join Chat
+              </button>
+            </form>
           </div>
         ) : (
           <form onSubmit={handleSendMessage} className="space-y-2">
+            {!currentUser && guestName && (
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1">
+                <span>
+                  Chatting as: <strong className="text-rose-400 font-semibold">{guestName}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingName(true)}
+                  className="text-zinc-500 hover:text-zinc-300 underline cursor-pointer text-[10px]"
+                >
+                  Change Name
+                </button>
+              </div>
+            )}
+
             {/* Quick emoji helper bar if toggled */}
             {showEmojiPicker && (
               <div className="flex items-center gap-1 p-1.5 rounded-lg bg-[#181824] border border-white/10 overflow-x-auto">
@@ -611,7 +670,7 @@ export function PollChat({ pollId, currentUser }: PollChatProps) {
                   type="text"
                   value={inputContent}
                   onChange={(e) => setInputContent(e.target.value)}
-                  placeholder="Share your verified opinion live in this poll..."
+                  placeholder="Share your opinion live in this poll..."
                   maxLength={1000}
                   disabled={isSending}
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all pr-12"

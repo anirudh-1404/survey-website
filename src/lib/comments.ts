@@ -178,10 +178,12 @@ export async function getPollDiscussion(
 
   const voteMap = new Map<string, "Yes" | "No">();
   for (const v of votes) {
-    voteMap.set(
-      v.userId.toString(),
-      v.option.toLowerCase() === "yes" ? "Yes" : "No"
-    );
+    if (v.userId) {
+      voteMap.set(
+        v.userId.toString(),
+        v.option.toLowerCase() === "yes" ? "Yes" : "No"
+      );
+    }
   }
 
   // 4. Map replies grouped by parentId

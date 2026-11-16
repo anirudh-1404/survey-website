@@ -6,7 +6,6 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   Menu,
   X,
-  ArrowUpRight,
   LogOut,
   User as UserIcon,
   ChevronDown,
@@ -227,21 +226,12 @@ export function Navbar() {
             </div>
           ) : (
             /* Unauthenticated Visitor Actions */
-            <>
-              <Link
-                href="/login"
-                className="rounded-md px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:text-white focus-visible:ring-1 focus-visible:ring-rose-500"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-white hover:shadow-sm focus-visible:ring-2 focus-visible:ring-rose-500"
-              >
-                Sign Up
-                <ArrowUpRight className="h-3 w-3 text-zinc-600" />
-              </Link>
-            </>
+            <Link
+              href="/login"
+              className="rounded-md border border-white/10 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:text-white hover:bg-white/5 focus-visible:ring-1 focus-visible:ring-rose-500"
+            >
+              Log In
+            </Link>
           )}
         </div>
 
@@ -324,22 +314,13 @@ export function Navbar() {
                   </button>
                 </div>
               ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="w-full rounded-md border border-white/10 py-2.5 text-center text-sm font-medium text-zinc-200 hover:bg-white/5"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Log In
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="w-full rounded-md bg-rose-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-rose-500"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
-                </>
+                <Link
+                  href="/login"
+                  className="w-full rounded-md border border-white/10 py-2.5 text-center text-sm font-medium text-zinc-200 hover:bg-white/5"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Log In
+                </Link>
               )}
             </div>
           </nav>

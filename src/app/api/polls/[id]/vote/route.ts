@@ -3,8 +3,6 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import {
   getCurrentUser,
-  requireAuth,
-  verifyCsrfOrigin,
   checkRateLimit,
   createErrorResponse,
   createSuccessResponse,
@@ -18,12 +16,13 @@ interface RouteParams {
 
 /**
  * GET /api/polls/[id]/vote
- * Retrieve current aggregated vote results and the authenticated user's voting status (if signed in).
+ * Retrieve current aggregated vote results and voting status (authenticated user or guest voterId).
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     await connectToDatabase();
     const { id } = await params;
+    const voterId = request.nextUrl.searchParams.get("voterId") || undefined;
 
     const isObjectId = mongoose.Types.ObjectId.isValid(id);
     const poll = await PollModel.findOne({
@@ -43,15 +42,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     let userVoteInfo: { hasVoted: boolean; option?: string } = { hasVoted: false };
     if (sessionWithUser) {
-      const check = await getUserVote(poll._id, sessionWithUser.user.id);
-      if (check) userVoteInfo = check;
+      const check = await getUserVote(poll._id, { userId: sessionWithUser.user.id });
+      if (check?.hasVoted) userVoteInfo = check;
+    } else if (voterId) {
+      const check = await getUserVote(poll._id, { voterId });
+      if (check?.hasVoted) userVoteInfo = check;
     }
 
     return createSuccessResponse({
       pollId: poll.slug || poll._id.toString(),
       hasVoted: userVoteInfo.hasVoted,
       userVote: userVoteInfo.option,
-      isClosed: poll.status === "closed" || Boolean(poll.closesAt && new Date() > new Date(poll.closesAt)),
+      isClosed:
+        poll.status === "closed" ||
+        Boolean(poll.closesAt && new Date() > new Date(poll.closesAt)),
       results,
     });
   } catch {
@@ -61,37 +65,46 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 /**
  * POST /api/polls/[id]/vote
- * Authenticated submission of a ballot.
- * Strictly derives userId from the authenticated session and prevents duplicate votes.
+ * Public submission of a ballot (open to everyone without mandatory registration).
+ * Supports both authenticated users and anonymous visitors via persistent voterId/IP.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    // 1. Verify CSRF origin on mutation
-    if (!verifyCsrfOrigin(request)) {
-      return createErrorResponse("Invalid request origin or CSRF token mismatch", 403);
-    }
-
-    // 2. Require authenticated user
-    const sessionWithUser = await requireAuth();
     const { id } = await params;
+    const sessionWithUser = await getCurrentUser();
 
-    // 2b. Rate Limiting on voting mutations (20 votes / minute per user)
-    const rateCheck = checkRateLimit(`vote_${sessionWithUser.user.id}`, 20, 60 * 1000);
-    if (!rateCheck.allowed) {
-      return createErrorResponse("Too many voting requests. Please wait a moment before trying again.", 429);
-    }
+    const rawIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "127.0.0.1";
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const option = typeof body.option === "string" ? body.option.trim() : "";
+    const voterId =
+      typeof body.voterId === "string" && body.voterId.trim()
+        ? body.voterId.trim()
+        : `anon_${rawIp.replace(/[^a-zA-Z0-9]/g, "_")}`;
 
     if (!option) {
       return createErrorResponse("Please select an option to cast your vote", 422);
     }
 
-    // 3. Cast vote using session's verified user ID
+    // Rate limiting per user or voter ID (20 votes / minute)
+    const rateKey = sessionWithUser ? `vote_${sessionWithUser.user.id}` : `vote_${voterId}`;
+    const rateCheck = checkRateLimit(rateKey, 20, 60 * 1000);
+    if (!rateCheck.allowed) {
+      return createErrorResponse(
+        "Too many voting requests. Please wait a moment before trying again.",
+        429
+      );
+    }
+
+    // Cast vote using session userId if available, or persistent guest voterId
     const voteOutcome = await castVote({
       pollIdentifier: id,
-      userId: sessionWithUser.user.id,
+      userId: sessionWithUser?.user?.id,
+      voterId: sessionWithUser ? undefined : voterId,
+      ipAddress: rawIp,
       option,
     });
 

@@ -3,7 +3,9 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface IVote extends Document {
   _id: mongoose.Types.ObjectId;
   pollId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
+  voterId?: string;
+  ipAddress?: string;
   option: string;
   createdAt: Date;
   updatedAt: Date;
@@ -20,8 +22,19 @@ const VoteSchema = new Schema<IVote>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "User ID is required"],
+      required: false,
       index: true,
+    },
+    voterId: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      index: true,
+    },
+    ipAddress: {
+      type: String,
+      trim: true,
+      maxlength: 100,
     },
     option: {
       type: String,
@@ -36,11 +49,14 @@ const VoteSchema = new Schema<IVote>(
   }
 );
 
-// Enforce one vote per user per poll at the database level
-VoteSchema.index({ pollId: 1, userId: 1 }, { unique: true });
+// Unique compound indexes with sparse to allow either userId or voterId
+VoteSchema.index({ pollId: 1, userId: 1 }, { unique: true, sparse: true });
+VoteSchema.index({ pollId: 1, voterId: 1 }, { unique: true, sparse: true });
 
 // Optimize option aggregation queries
 VoteSchema.index({ pollId: 1, option: 1 });
 
 export const VoteModel: Model<IVote> =
   mongoose.models.Vote || mongoose.model<IVote>("Vote", VoteSchema);
+
+export default VoteModel;

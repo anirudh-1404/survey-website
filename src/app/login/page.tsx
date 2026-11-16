@@ -245,16 +245,10 @@ function LoginForm() {
           </div>
         </form>
 
-        {/* Bottom Registration Link */}
+        {/* Platform Notice */}
         <div className="mt-6 border-t border-white/10 pt-4 text-center">
-          <p className="text-xs text-zinc-400">
-            Don&apos;t have an account yet?{" "}
-            <Link
-              href="/register"
-              className="font-semibold text-rose-400 hover:text-rose-300 transition-colors"
-            >
-              Create citizen account
-            </Link>
+          <p className="text-xs text-zinc-500">
+            Voting and live chat are open to all citizens without requiring registration.
           </p>
         </div>
       </div>

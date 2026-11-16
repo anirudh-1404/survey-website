@@ -10,7 +10,8 @@ export interface IChatReaction {
 export interface IChatMessage extends Document {
   _id: mongoose.Types.ObjectId;
   pollId: mongoose.Types.ObjectId;
-  authorId: mongoose.Types.ObjectId;
+  authorId?: mongoose.Types.ObjectId;
+  guestName?: string;
   content: string;
   status: ChatMessageStatus;
   reactions: IChatReaction[];
@@ -49,8 +50,13 @@ const ChatMessageSchema = new Schema<IChatMessage>(
     authorId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Author ID is required"],
+      required: false,
       index: true,
+    },
+    guestName: {
+      type: String,
+      trim: true,
+      maxlength: [100, "Guest name cannot exceed 100 characters"],
     },
     content: {
       type: String,
