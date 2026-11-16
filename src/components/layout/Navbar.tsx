@@ -224,15 +224,7 @@ export function Navbar() {
                 </div>
               )}
             </div>
-          ) : (
-            /* Unauthenticated Visitor Actions */
-            <Link
-              href="/login"
-              className="rounded-md border border-white/10 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:text-white hover:bg-white/5 focus-visible:ring-1 focus-visible:ring-rose-500"
-            >
-              Log In
-            </Link>
-          )}
+          ) : null}
         </div>
 
         {/* Mobile menu trigger */}
@@ -275,8 +267,8 @@ export function Navbar() {
               );
             })}
 
-            <div className="mt-4 border-t border-white/10 pt-4 flex flex-col gap-2.5">
-              {currentUser ? (
+            {currentUser && (
+              <div className="mt-4 border-t border-white/10 pt-4 flex flex-col gap-2.5">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between rounded-lg bg-white/5 p-3 text-xs text-zinc-300">
                     <div className="flex items-center gap-2.5">
@@ -313,16 +305,8 @@ export function Navbar() {
                     <span>Log Out</span>
                   </button>
                 </div>
-              ) : (
-                <Link
-                  href="/login"
-                  className="w-full rounded-md border border-white/10 py-2.5 text-center text-sm font-medium text-zinc-200 hover:bg-white/5"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Log In
-                </Link>
-              )}
-            </div>
+              </div>
+            )}
           </nav>
         </div>
       )}
