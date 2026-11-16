@@ -25,6 +25,9 @@ export interface IPoll extends Document {
   imageUrl?: string;
   cloudinaryPublicId?: string;
   imageAlt?: string;
+  seoKeywords?: string[];
+  metaTitle?: string;
+  metaDescription?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -150,6 +153,20 @@ const PollSchema = new Schema<IPoll>(
       type: String,
       trim: true,
       maxlength: [200, "Image description cannot exceed 200 characters"],
+    },
+    seoKeywords: {
+      type: [String],
+      default: [],
+    },
+    metaTitle: {
+      type: String,
+      trim: true,
+      maxlength: [200, "Meta title cannot exceed 200 characters"],
+    },
+    metaDescription: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Meta description cannot exceed 500 characters"],
     },
   },
   {

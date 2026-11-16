@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Plus,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
@@ -50,6 +51,9 @@ export default function EditPollPage({ params }: EditPollPageProps) {
   const [imageUrl, setImageUrl] = useState("");
   const [cloudinaryPublicId, setCloudinaryPublicId] = useState("");
   const [imageAlt, setImageAlt] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [seoKeywords, setSeoKeywords] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -115,6 +119,11 @@ export default function EditPollPage({ params }: EditPollPageProps) {
           setImageUrl(p.imageUrl || "");
           setCloudinaryPublicId(p.cloudinaryPublicId || "");
           setImageAlt(p.imageAlt || "");
+          setMetaTitle(p.metaTitle || "");
+          setMetaDescription(p.metaDescription || "");
+          setSeoKeywords(
+            Array.isArray(p.seoKeywords) ? p.seoKeywords.join(", ") : ""
+          );
 
           if (Array.isArray(p.options) && p.options.length >= 2) {
             setOptions(
@@ -225,6 +234,9 @@ export default function EditPollPage({ params }: EditPollPageProps) {
           imageUrl: imageUrl.trim() || "",
           cloudinaryPublicId: cloudinaryPublicId.trim() || "",
           imageAlt: imageAlt.trim() || "",
+          metaTitle: metaTitle.trim() || "",
+          metaDescription: metaDescription.trim() || "",
+          seoKeywords: seoKeywords.trim() || "",
         }),
       });
 
@@ -697,6 +709,99 @@ export default function EditPollPage({ params }: EditPollPageProps) {
               <Plus className="h-4 w-4 text-rose-400" />
               <span>Add Another Option</span>
             </button>
+          </div>
+        </div>
+
+        {/* Card 4: Search Engine Optimization & Viral Discovery */}
+        <div className="rounded-xl border border-white/10 bg-[#10121a] p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span>4. SEO & Social Discovery (Optional)</span>
+                <span className="rounded-full bg-rose-950/40 border border-rose-500/30 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
+                  Hidden From Public UI
+                </span>
+              </h3>
+              <p className="text-xs text-zinc-400 mt-1">
+                Keywords and custom meta tags injected into search engine headers and WhatsApp share previews.
+              </p>
+            </div>
+          </div>
+
+          {/* Meta Title */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="edit-meta-title"
+                className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
+              >
+                Custom Meta Title (Google Search &amp; Social Previews)
+              </label>
+              <span className="text-[11px] text-zinc-500">
+                {metaTitle.length}/200 chars • Optional
+              </span>
+            </div>
+            <input
+              id="edit-meta-title"
+              type="text"
+              value={metaTitle}
+              onChange={(e) => setMetaTitle(e.target.value)}
+              placeholder="Leave empty to use main question title automatically"
+              className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-500"
+            />
+            <p className="mt-1 text-[11px] text-zinc-500">
+              Overrides the page &lt;title&gt; tag shown in Google search results and WhatsApp link cards.
+            </p>
+          </div>
+
+          {/* Meta Description */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="edit-meta-description"
+                className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
+              >
+                Custom Meta Description (Search Snippet)
+              </label>
+              <span className="text-[11px] text-zinc-500">
+                {metaDescription.length}/500 chars • Optional
+              </span>
+            </div>
+            <textarea
+              id="edit-meta-description"
+              rows={2}
+              value={metaDescription}
+              onChange={(e) => setMetaDescription(e.target.value)}
+              placeholder="Leave empty to use editorial summary automatically"
+              className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-500 resize-none"
+            />
+            <p className="mt-1 text-[11px] text-zinc-500">
+              The 1-2 sentence description Google and social apps display under the poll title.
+            </p>
+          </div>
+
+          {/* SEO Keywords & Hashtags */}
+          <div>
+            <label
+              htmlFor="edit-seo-keywords"
+              className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5"
+            >
+              SEO Keywords &amp; Hashtags (Comma Separated)
+            </label>
+            <input
+              id="edit-seo-keywords"
+              type="text"
+              value={seoKeywords}
+              onChange={(e) => setSeoKeywords(e.target.value)}
+              placeholder="e.g. #PunjabElections2027, Bhagwant Mann, AAP Candidate List, Vidhan Sabha, Amritsar"
+              className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-500"
+            />
+            <div className="mt-2 rounded-lg bg-white/[0.02] border border-white/5 p-3 text-[11px] text-zinc-400 flex items-start gap-2">
+              <Sparkles className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+              <span>
+                <strong>Invisible to Visitors:</strong> These keywords will NOT be displayed on the public poll card or page UI. They are strictly embedded in page &lt;meta&gt; tags and Schema.org JSON-LD to optimize Google rankings, Discover feed, and viral algorithms.
+              </span>
+            </div>
           </div>
         </div>
 

@@ -126,6 +126,9 @@ export function mapPollToUI(
     imageUrl: p.imageUrl || undefined,
     cloudinaryPublicId: p.cloudinaryPublicId || undefined,
     imageAlt: p.imageAlt || undefined,
+    seoKeywords: Array.isArray(p.seoKeywords) ? p.seoKeywords : [],
+    metaTitle: p.metaTitle || undefined,
+    metaDescription: p.metaDescription || undefined,
     options,
   };
 }

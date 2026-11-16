@@ -70,6 +70,9 @@ export interface Poll {
   imageUrl?: string;
   cloudinaryPublicId?: string;
   imageAlt?: string;
+  seoKeywords?: string[];
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export interface TrendingTopic {

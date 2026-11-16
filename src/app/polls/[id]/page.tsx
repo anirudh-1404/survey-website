@@ -40,28 +40,36 @@ export async function generateMetadata({
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pulse.org";
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://saynow.in";
   const canonicalUrl = `${siteUrl}/polls/${poll.id}`;
 
+  const pageTitle = poll.metaTitle || `${poll.title} — SayNow Public Opinion Survey`;
+  const pageDescription = poll.metaDescription || poll.summary;
+  const keywords =
+    Array.isArray(poll.seoKeywords) && poll.seoKeywords.length > 0
+      ? poll.seoKeywords
+      : [poll.category, "Public Opinion Poll", "Civic Survey", "India Poll"];
+
   return {
-    title: `${poll.title} — PULSE Survey`,
-    description: poll.summary,
+    title: pageTitle,
+    description: pageDescription,
+    keywords,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: `${poll.title} — PULSE Survey`,
-      description: poll.summary,
+      title: pageTitle,
+      description: pageDescription,
       url: canonicalUrl,
-      siteName: "PULSE",
+      siteName: "SayNow",
       type: "article",
       publishedTime: poll.publishedAt,
-      ...(poll.imageUrl ? { images: [{ url: poll.imageUrl, alt: poll.imageAlt || poll.title }] } : {}),
+      ...(poll.imageUrl ? { images: [{ url: poll.imageUrl, alt: poll.title }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: `${poll.title} — PULSE Survey`,
-      description: poll.summary,
+      title: pageTitle,
+      description: pageDescription,
       ...(poll.imageUrl ? { images: [poll.imageUrl] } : {}),
     },
   };
@@ -116,21 +124,25 @@ export default async function PollDetailPage({ params }: PollPageProps) {
   let relatedPolls = await getPublishedPolls({ category: poll.category, limit: 4 });
   relatedPolls = relatedPolls.filter((p) => p.id !== poll.id).slice(0, 3);
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pulse.org";
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://saynow.in";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "DiscussionForumPosting",
-    headline: poll.title,
-    description: poll.summary,
+    headline: poll.metaTitle || poll.title,
+    description: poll.metaDescription || poll.summary,
     articleSection: poll.category,
     datePublished: poll.publishedAt,
+    keywords:
+      Array.isArray(poll.seoKeywords) && poll.seoKeywords.length > 0
+        ? poll.seoKeywords.join(", ")
+        : undefined,
     author: {
       "@type": "Organization",
-      name: "PULSE Editorial Team",
+      name: "SayNow Editorial Team",
     },
     publisher: {
       "@type": "Organization",
-      name: "PULSE",
+      name: "SayNow",
       url: siteUrl,
     },
   };

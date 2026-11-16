@@ -57,6 +57,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         imageUrl: poll.imageUrl || "",
         cloudinaryPublicId: poll.cloudinaryPublicId || "",
         imageAlt: poll.imageAlt || "",
+        seoKeywords: poll.seoKeywords || [],
+        metaTitle: poll.metaTitle || "",
+        metaDescription: poll.metaDescription || "",
         createdBy: poll.createdBy ? { name: (poll.createdBy as { name?: string }).name } : null,
         createdAt: new Date(poll.createdAt).toISOString(),
         updatedAt: new Date(poll.updatedAt).toISOString(),
@@ -219,6 +222,33 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       poll.imageAlt = newImageAlt || undefined;
     } else if (body.imageAlt !== undefined) {
       poll.imageAlt = typeof body.imageAlt === "string" ? body.imageAlt.trim() : undefined;
+    }
+
+    if (body.seoKeywords !== undefined) {
+      if (Array.isArray(body.seoKeywords)) {
+        poll.seoKeywords = body.seoKeywords.map((k) => String(k).trim()).filter(Boolean);
+      } else if (typeof body.seoKeywords === "string") {
+        poll.seoKeywords = body.seoKeywords
+          .split(/[,;\n]+/)
+          .map((k) => k.trim())
+          .filter(Boolean);
+      } else {
+        poll.seoKeywords = [];
+      }
+    }
+
+    if (body.metaTitle !== undefined) {
+      poll.metaTitle =
+        typeof body.metaTitle === "string" && body.metaTitle.trim()
+          ? body.metaTitle.trim().slice(0, 200)
+          : undefined;
+    }
+
+    if (body.metaDescription !== undefined) {
+      poll.metaDescription =
+        typeof body.metaDescription === "string" && body.metaDescription.trim()
+          ? body.metaDescription.trim().slice(0, 500)
+          : undefined;
     }
 
     await poll.save();

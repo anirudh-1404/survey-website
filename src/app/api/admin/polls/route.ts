@@ -120,6 +120,9 @@ export async function POST(request: NextRequest) {
       imageUrl,
       cloudinaryPublicId,
       imageAlt,
+      seoKeywords,
+      metaTitle,
+      metaDescription,
     } = body;
 
     const errors: Record<string, string> = {};
@@ -187,6 +190,26 @@ export async function POST(request: NextRequest) {
 
     // 5. Create poll
     const now = new Date();
+    let parsedSeoKeywords: string[] = [];
+    if (Array.isArray(seoKeywords)) {
+      parsedSeoKeywords = seoKeywords.map((k) => String(k).trim()).filter(Boolean);
+    } else if (typeof seoKeywords === "string" && seoKeywords.trim()) {
+      parsedSeoKeywords = seoKeywords
+        .split(/[,;\n]+/)
+        .map((k) => k.trim())
+        .filter(Boolean);
+    }
+
+    const cleanMetaTitle =
+      typeof metaTitle === "string" && metaTitle.trim()
+        ? metaTitle.trim().slice(0, 200)
+        : undefined;
+
+    const cleanMetaDescription =
+      typeof metaDescription === "string" && metaDescription.trim()
+        ? metaDescription.trim().slice(0, 500)
+        : undefined;
+
     const poll = await PollModel.create({
       title: cleanTitle,
       slug,
@@ -204,6 +227,9 @@ export async function POST(request: NextRequest) {
       imageUrl: cleanImageUrl,
       cloudinaryPublicId: typeof cloudinaryPublicId === "string" && cloudinaryPublicId.trim() ? cloudinaryPublicId.trim() : undefined,
       imageAlt: typeof imageAlt === "string" && imageAlt.trim() ? imageAlt.trim() : undefined,
+      seoKeywords: parsedSeoKeywords,
+      metaTitle: cleanMetaTitle,
+      metaDescription: cleanMetaDescription,
     });
 
     // If this poll is featured, ensure all other polls are unfeatured
