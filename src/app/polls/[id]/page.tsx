@@ -16,6 +16,7 @@ import { PollModel } from "@/models/Poll";
 import mongoose from "mongoose";
 import { getPollDiscussion } from "@/lib/comments";
 import { connection } from "next/server";
+import { getSiteUrl, absoluteUrl } from "@/lib/site-url";
 
 interface PollPageProps {
   params: Promise<{ id: string }>;
@@ -31,7 +32,7 @@ export async function generateMetadata({
 
   if (!poll || poll.status === "Draft") {
     return {
-      title: "Survey Not Found — PULSE",
+      title: "Survey Not Found — SayNow",
       description: "The requested news poll inquiry could not be found.",
       robots: {
         index: false,
@@ -40,8 +41,8 @@ export async function generateMetadata({
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://saynow.in";
-  const canonicalUrl = `${siteUrl}/polls/${poll.id}`;
+  const siteUrl = getSiteUrl();
+  const canonicalUrl = absoluteUrl(`/polls/${poll.id}`);
 
   const pageTitle = poll.metaTitle || `${poll.title} — SayNow Public Opinion Survey`;
   const pageDescription = poll.metaDescription || poll.summary;
@@ -124,7 +125,7 @@ export default async function PollDetailPage({ params }: PollPageProps) {
   let relatedPolls = await getPublishedPolls({ category: poll.category, limit: 4 });
   relatedPolls = relatedPolls.filter((p) => p.id !== poll.id).slice(0, 3);
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://saynow.in";
+  const siteUrl = getSiteUrl();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "DiscussionForumPosting",

@@ -12,12 +12,24 @@ import { BlogPost } from "@/types/blog";
 import { Poll } from "@/types/poll";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { connection } from "next/server";
+import { getSiteUrl } from "@/lib/site-url";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "SayNow — Public Opinion on Global Issues",
   description:
     "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
+  alternates: {
+    canonical: getSiteUrl(),
+  },
+  openGraph: {
+    title: "SayNow — Public Opinion on Global Issues",
+    description:
+      "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
+    url: getSiteUrl(),
+    siteName: "SayNow",
+    type: "website",
+  },
   verification: {
     google: "JH-bwIEmWDLC_gWX9_rKyU5DTzSJjLf2ftQoVeewtsM",
   },
@@ -58,8 +70,22 @@ export default async function HomePage() {
     // Graceful fallback if database connection is temporarily degraded
   }
 
+  const siteUrl = getSiteUrl();
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "SayNow",
+    url: siteUrl,
+    description:
+      "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-[#090a0f] text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       {/* 1. Header & Navigation */}
       <Navbar />
 

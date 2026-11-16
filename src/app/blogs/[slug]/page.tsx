@@ -14,6 +14,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { connection } from "next/server";
+import { getSiteUrl, absoluteUrl } from "@/lib/site-url";
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
@@ -29,7 +30,7 @@ export async function generateMetadata({
 
   if (!blog || blog.status !== "published") {
     return {
-      title: "Article Not Found — PULSE Journal",
+      title: "Article Not Found — SayNow Journal",
       description: "The requested editorial dispatch could not be found.",
       robots: {
         index: false,
@@ -38,9 +39,9 @@ export async function generateMetadata({
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pulse.org";
-  const canonicalUrl = `${siteUrl}/blogs/${blog.slug}`;
-  const title = blog.seoTitle || `${blog.title} — PULSE Journal`;
+  const siteUrl = getSiteUrl();
+  const canonicalUrl = absoluteUrl(`/blogs/${blog.slug}`);
+  const title = blog.seoTitle || `${blog.title} — SayNow Journal`;
   const description = blog.seoDescription || blog.excerpt;
 
   return {
@@ -53,7 +54,7 @@ export async function generateMetadata({
       title,
       description,
       url: canonicalUrl,
-      siteName: "PULSE",
+      siteName: "SayNow",
       type: "article",
       publishedTime: blog.publishedAt || blog.createdAt,
       authors: [blog.author.name],
@@ -98,7 +99,7 @@ export default async function BlogPostDetailPage({ params }: BlogPageProps) {
     .filter((b) => b.id !== blog.id)
     .slice(0, 3);
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pulse.org";
+  const siteUrl = getSiteUrl();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -114,7 +115,7 @@ export default async function BlogPostDetailPage({ params }: BlogPageProps) {
     },
     publisher: {
       "@type": "Organization",
-      name: "PULSE",
+      name: "SayNow",
       url: siteUrl,
     },
   };

@@ -12,6 +12,7 @@ import {
   Sparkles,
   Image as ImageIcon,
 } from "lucide-react";
+import { absoluteUrl } from "@/lib/site-url";
 
 interface BlogsPageProps {
   searchParams: Promise<{ page?: string; category?: string }>;
@@ -20,13 +21,18 @@ interface BlogsPageProps {
 export const instant = false;
 
 export const metadata: Metadata = {
-  title: "Editorial Analyses & Investigative Dispatches — PULSE",
+  title: "Editorial Analyses & Investigative Dispatches — SayNow",
   description:
     "In-depth research breakdowns, empirical polling analyses, and investigative editorial commentary shaping global civic discourse.",
+  alternates: {
+    canonical: absoluteUrl("/blogs"),
+  },
   openGraph: {
-    title: "Editorial Analyses & Investigative Dispatches — PULSE",
+    title: "Editorial Analyses & Investigative Dispatches — SayNow",
     description:
       "In-depth research breakdowns, empirical polling analyses, and investigative editorial commentary.",
+    url: absoluteUrl("/blogs"),
+    siteName: "SayNow",
     type: "website",
   },
 };

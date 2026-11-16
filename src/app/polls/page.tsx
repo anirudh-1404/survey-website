@@ -7,6 +7,7 @@ import { getPublishedPolls } from "@/lib/polls";
 import { Poll, PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollModel } from "@/models/Poll";
 import { Layers, BarChart3, HelpCircle } from "lucide-react";
+import { absoluteUrl } from "@/lib/site-url";
 
 interface PollsPageProps {
   searchParams: Promise<{ category?: string; status?: string }>;
@@ -15,14 +16,18 @@ interface PollsPageProps {
 export const instant = false;
 
 export const metadata: Metadata = {
-  title: "Public Opinion Polls Archive — PULSE",
+  title: "Public Opinion Polls Archive — SayNow",
   description:
     "Explore all open and concluded public opinion inquiries on pivotal technologies, socioeconomic policy, and global discourse.",
+  alternates: {
+    canonical: absoluteUrl("/polls"),
+  },
   openGraph: {
-    title: "Public Opinion Polls Archive — PULSE",
+    title: "Public Opinion Polls Archive — SayNow",
     description:
       "Explore all open and concluded public opinion inquiries on pivotal technologies, socioeconomic policy, and global discourse.",
-    siteName: "PULSE",
+    url: absoluteUrl("/polls"),
+    siteName: "SayNow",
     type: "website",
   },
 };

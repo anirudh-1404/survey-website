@@ -87,7 +87,7 @@ export function AdminHeader({
                 {user?.name || "Administrator"}
               </p>
               <p className="text-[10px] text-zinc-500">
-                {user?.email || "admin@pulse.org"}
+                {user?.email || "admin@saynow.in"}
               </p>
             </div>
             <button
