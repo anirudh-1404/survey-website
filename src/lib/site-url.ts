@@ -2,22 +2,28 @@
  * Centralized Canonical Site URL Configuration for SayNow
  *
  * Resolves the base URL using the following priority:
- * 1. process.env.NEXT_PUBLIC_SITE_URL
- * 2. process.env.NEXT_PUBLIC_APP_URL
- * 3. process.env.SITE_URL
+ * 1. process.env.NEXT_PUBLIC_SITE_URL (if not legacy pulse.org)
+ * 2. process.env.SITE_URL (if not legacy pulse.org)
+ * 3. process.env.NEXT_PUBLIC_APP_URL (if not legacy pulse.org)
  * 4. Fallback production canonical: "https://saynow.in"
  */
 
 export function getSiteUrl(): string {
-  const envUrl =
+  const candidate =
     process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.SITE_URL;
+    process.env.SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL;
 
-  if (envUrl && typeof envUrl === "string" && envUrl.trim().length > 0) {
-    return envUrl.trim().replace(/\/+$/, "");
+  if (
+    candidate &&
+    typeof candidate === "string" &&
+    candidate.trim().length > 0 &&
+    !candidate.includes("pulse.org")
+  ) {
+    return candidate.trim().replace(/\/+$/, "");
   }
 
+  // The true canonical production domain for SayNow
   return "https://saynow.in";
 }
 
