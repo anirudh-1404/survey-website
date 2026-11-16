@@ -33,7 +33,7 @@ export function HowItWorks() {
             Rigorous Civic Polling
           </h2>
           <p className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            How PULSE measures verified public opinion
+            How SayNow measures verified public opinion
           </p>
           <p className="mt-4 text-base leading-relaxed text-zinc-300">
             A credible opinion platform requires editorial neutrality, robust bot defense,

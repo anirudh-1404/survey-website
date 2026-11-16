@@ -32,11 +32,14 @@ export const metadata: Metadata = {
     "SayNow",
   ],
   authors: [{ name: "SayNow Editorial Team" }],
+  alternates: {
+    canonical: "https://saynow.in/",
+  },
   openGraph: {
     title: "SayNow — Public Opinion on Global Issues",
     description:
       "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
-    url: siteUrl,
+    url: "https://saynow.in/",
     siteName: "SayNow",
     type: "website",
     locale: "en_US",
@@ -50,6 +53,13 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   verification: {
     google: "JH-bwIEmWDLC_gWX9_rKyU5DTzSJjLf2ftQoVeewtsM",

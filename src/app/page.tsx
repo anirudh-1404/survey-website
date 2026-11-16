@@ -12,7 +12,6 @@ import { BlogPost } from "@/types/blog";
 import { Poll } from "@/types/poll";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { connection } from "next/server";
-import { getSiteUrl } from "@/lib/site-url";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,13 +19,24 @@ export const metadata: Metadata = {
   description:
     "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
   alternates: {
-    canonical: getSiteUrl(),
+    canonical: "https://saynow.in/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   openGraph: {
     title: "SayNow — Public Opinion on Global Issues",
     description:
       "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
-    url: getSiteUrl(),
+    url: "https://saynow.in/",
     siteName: "SayNow",
     type: "website",
   },
@@ -70,12 +80,11 @@ export default async function HomePage() {
     // Graceful fallback if database connection is temporarily degraded
   }
 
-  const siteUrl = getSiteUrl();
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "SayNow",
-    url: siteUrl,
+    url: "https://saynow.in/",
     description:
       "An independent, modern public-opinion platform where verified citizens debate and vote on news-shaping issues, policy developments, and global affairs.",
   };

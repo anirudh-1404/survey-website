@@ -16,6 +16,21 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.saynow.in",
+          },
+        ],
+        destination: "https://saynow.in/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
