@@ -49,7 +49,7 @@ export default async function AdminOverviewPage() {
     ]),
     PollModel.find()
       .sort({ createdAt: -1 })
-      .limit(6)
+      .limit(50)
       .populate("createdBy", "name email")
       .lean(),
     getRecentVisits(6),
@@ -296,46 +296,6 @@ export default async function AdminOverviewPage() {
                           <Eye className="h-3.5 w-3.5 text-zinc-400" />
                           <span>{(poll.views || 0).toLocaleString()}</span>
                         </div>
-                      </td>
-                      <td className="py-3.5 pr-4 max-w-xs font-medium text-white truncate">
-                        {isPublished ? (
-                          <Link
-                            href={`/polls/${poll.slug}`}
-                            className="hover:text-rose-400 transition-colors"
-                            target="_blank"
-                          >
-                            {poll.title}
-                          </Link>
-                        ) : (
-                          <span>{poll.title}</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-zinc-300 uppercase">
-                          {poll.category}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                            isPublished
-                              ? "border border-emerald-500/30 bg-emerald-950/20 text-emerald-300"
-                              : isDraft
-                              ? "border border-amber-500/30 bg-amber-950/20 text-amber-300"
-                              : "border border-zinc-700 bg-zinc-800 text-zinc-400"
-                          }`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                              isPublished
-                                ? "bg-emerald-400"
-                                : isDraft
-                                ? "bg-amber-400"
-                                : "bg-zinc-500"
-                            }`}
-                          />
-                          {poll.status}
-                        </span>
                       </td>
                       <td className="py-3.5 px-4 font-mono whitespace-nowrap text-zinc-400">
                         {new Date(poll.createdAt).toLocaleDateString("en-US", {
