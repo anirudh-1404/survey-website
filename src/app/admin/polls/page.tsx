@@ -15,6 +15,7 @@ import {
   Archive,
   RefreshCw,
   Eye,
+  MessageSquare,
 } from "lucide-react";
 
 interface AdminPollItem {
@@ -435,6 +436,16 @@ export default function AdminPollsPage() {
                               <span>View</span>
                             </Link>
                           )}
+
+                          {/* Chat Room Link */}
+                          <Link
+                            href={`/admin/chats?pollId=${poll.id}`}
+                            className="inline-flex items-center gap-1 rounded bg-rose-500/10 border border-rose-500/20 px-2 py-1 text-[11px] font-medium text-rose-300 hover:bg-rose-500/20 hover:text-white transition-colors"
+                            title="Inspect Poll Chat Room"
+                          >
+                            <MessageSquare className="h-3 w-3" />
+                            <span>Chat</span>
+                          </Link>
 
                           {/* Edit Link */}
                           <Link

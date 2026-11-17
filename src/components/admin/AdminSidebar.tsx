@@ -15,6 +15,7 @@ import {
   Activity,
   Zap,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { SayNowLogo } from "@/components/layout/SayNowLogo";
 
@@ -41,6 +42,12 @@ export function AdminSidebar({
       href: "/admin/polls",
       icon: Layers,
       exact: true,
+    },
+    {
+      label: "Live Poll Chats",
+      href: "/admin/chats",
+      icon: MessageSquare,
+      exact: false,
     },
     {
       label: "Audience & Traffic",

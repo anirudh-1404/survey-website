@@ -17,9 +17,13 @@ import {
   RefreshCw,
   Radio,
   Vote,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
+import { PollChat } from "@/components/chat/PollChat";
 import { toast } from "sonner";
 
 interface EditPollPageProps {
@@ -66,6 +70,12 @@ export default function EditPollPage({ params }: EditPollPageProps) {
   const [justIncremented, setJustIncremented] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showLiveChat, setShowLiveChat] = useState(true);
+  const [chatUser, setChatUser] = useState<{ id: string; name: string; role: "user" | "admin" }>({
+    id: "admin",
+    name: "Editorial Admin",
+    role: "admin",
+  });
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -261,6 +271,17 @@ export default function EditPollPage({ params }: EditPollPageProps) {
       clearInterval(interval);
     };
   }, [pollId, isLiveStreaming]);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.data?.user) {
+          setChatUser(data.data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleAddCustomCategory = () => {
     const trimmed = customCategoryInput.trim();
@@ -674,6 +695,62 @@ export default function EditPollPage({ params }: EditPollPageProps) {
                 );
               })}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* LIVE POLL CHAT & CITIZEN DISCOURSE MONITOR */}
+      <div className="rounded-2xl border border-white/10 bg-[#10121a] overflow-hidden shadow-2xl">
+        <div className="flex items-center justify-between p-4 bg-white/[0.02] border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+              <MessageSquare className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <span>Citizen Live Chat & Discourse Monitor</span>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Live Stream Active
+                </span>
+              </h3>
+              <p className="text-[11px] text-zinc-400">
+                Real-time user debates for this inquiry • View incoming messages and moderate instantly
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/chats?pollId=${pollId}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <span>Full Screen Hub</span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setShowLiveChat((prev) => !prev)}
+              className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            >
+              {showLiveChat ? (
+                <>
+                  <span>Collapse</span>
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </>
+              ) : (
+                <>
+                  <span>Expand Chat</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {showLiveChat && (
+          <div className="h-[520px]">
+            <PollChat pollId={pollId} currentUser={chatUser} />
           </div>
         )}
       </div>
