@@ -88,7 +88,6 @@ export function PollDetailInteractive({
     message: string;
   } | null>(null);
 
-  const [totalVotes, setTotalVotes] = useState(poll.totalVotes);
   const [optionsState, setOptionsState] = useState<PollOption[]>(poll.options);
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -145,7 +144,6 @@ export function PollDetailInteractive({
 
         if (data.data?.results) {
           const r = data.data.results;
-          setTotalVotes(r.total);
           setOptionsState((prev) =>
             prev.map((opt) => {
               const key = opt.id.replace(/^opt-/, "").toLowerCase();
@@ -339,17 +337,12 @@ export function PollDetailInteractive({
           >
             {/* Header: Status and closing info */}
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div>
-                <h2
-                  id="ballot-panel-heading"
-                  className="text-sm font-bold uppercase tracking-wider text-white"
-                >
-                  Citizen Balloting
-                </h2>
-                <span className="text-xs font-mono text-zinc-400">
-                  {totalVotes.toLocaleString()} votes verified
-                </span>
-              </div>
+              <h2
+                id="ballot-panel-heading"
+                className="text-sm font-bold uppercase tracking-wider text-white"
+              >
+                Citizen Balloting
+              </h2>
 
               <div>
                 {isClosed ? (
