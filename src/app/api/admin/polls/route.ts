@@ -6,6 +6,7 @@ import { generateUniqueSlug } from "@/lib/polls";
 import { PollCategory } from "@/types/poll";
 import { submitUrlsForInstantIndexing } from "@/lib/indexing";
 import { absoluteUrl } from "@/lib/site-url";
+import { getBatchPollVoteResults } from "@/lib/votes";
 
 /**
  * GET /api/admin/polls
@@ -53,24 +54,39 @@ export async function GET(request: NextRequest) {
       PollModel.countDocuments(filter),
     ]);
 
+    const pollIds = polls.map((p) => p._id);
+    const voteResultsMap = await getBatchPollVoteResults(pollIds);
+
     return createSuccessResponse({
-      polls: polls.map((p) => ({
-        id: p._id.toString(),
-        slug: p.slug,
-        title: p.title,
-        category: p.category,
-        summary: p.summary,
-        status: p.status,
-        featured: p.featured,
-        views: p.views || 0,
-        publishedAt: p.publishedAt ? new Date(p.publishedAt).toISOString() : null,
-        closesAt: p.closesAt ? new Date(p.closesAt).toISOString() : null,
-        createdAt: new Date(p.createdAt).toISOString(),
-        updatedAt: new Date(p.updatedAt).toISOString(),
-        createdBy: p.createdBy ? { name: (p.createdBy as { name?: string }).name } : null,
-        imageUrl: p.imageUrl,
-        imageAlt: p.imageAlt,
-      })),
+      polls: polls.map((p) => {
+        const pId = p._id.toString();
+        const voteStats = voteResultsMap.get(pId);
+        return {
+          id: pId,
+          slug: p.slug,
+          title: p.title,
+          category: p.category,
+          summary: p.summary,
+          status: p.status,
+          featured: p.featured,
+          views: p.views || 0,
+          totalVotes: voteStats?.total || 0,
+          voteResults: voteStats?.byOption || {},
+          options: (p.options || []).map((opt) => ({
+            key: opt.key,
+            label: opt.label,
+            votes: voteStats?.byOption?.[opt.key.toLowerCase()]?.count || 0,
+            percentage: voteStats?.byOption?.[opt.key.toLowerCase()]?.percentage || 0,
+          })),
+          publishedAt: p.publishedAt ? new Date(p.publishedAt).toISOString() : null,
+          closesAt: p.closesAt ? new Date(p.closesAt).toISOString() : null,
+          createdAt: new Date(p.createdAt).toISOString(),
+          updatedAt: new Date(p.updatedAt).toISOString(),
+          createdBy: p.createdBy ? { name: (p.createdBy as { name?: string }).name } : null,
+          imageUrl: p.imageUrl,
+          imageAlt: p.imageAlt,
+        };
+      }),
       pagination: {
         page,
         limit,

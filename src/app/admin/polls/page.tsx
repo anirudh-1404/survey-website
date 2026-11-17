@@ -26,6 +26,9 @@ interface AdminPollItem {
   status: "draft" | "published" | "closed";
   featured: boolean;
   views?: number;
+  totalVotes?: number;
+  voteResults?: Record<string, { count: number; percentage: number }>;
+  options?: Array<{ key: string; label: string; votes: number; percentage: number }>;
   publishedAt: string | null;
   closesAt: string | null;
   createdAt: string;
@@ -37,6 +40,9 @@ interface AdminPollItem {
 export default function AdminPollsPage() {
   const [polls, setPolls] = useState<AdminPollItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLiveAutoRefresh, setIsLiveAutoRefresh] = useState(true);
+  const [isSilentSyncing, setIsSilentSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -53,40 +59,57 @@ export default function AdminPollsPage() {
     return Array.from(set);
   }, [polls]);
 
-  const fetchPolls = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery.trim()) params.set("search", searchQuery.trim());
-      if (categoryFilter !== "All") params.set("category", categoryFilter);
-      if (statusFilter !== "All") params.set("status", statusFilter);
+  const fetchPolls = useCallback(
+    async (isSilent = false) => {
+      if (!isSilent) setIsLoading(true);
+      else setIsSilentSyncing(true);
+      try {
+        const params = new URLSearchParams();
+        if (searchQuery.trim()) params.set("search", searchQuery.trim());
+        if (categoryFilter !== "All") params.set("category", categoryFilter);
+        if (statusFilter !== "All") params.set("status", statusFilter);
 
-      const res = await fetch(`/api/admin/polls?${params.toString()}`);
-      const data = await res.json();
-      if (res.ok) {
-        setPolls(data.data.polls || []);
-      } else {
-        setActionNotice({
-          type: "error",
-          message: data.error || "Failed to load polls from database.",
-        });
+        const res = await fetch(`/api/admin/polls?${params.toString()}`);
+        const data = await res.json();
+        if (res.ok) {
+          setPolls(data.data.polls || []);
+          setLastSyncedAt(new Date());
+        } else if (!isSilent) {
+          setActionNotice({
+            type: "error",
+            message: data.error || "Failed to load polls from database.",
+          });
+        }
+      } catch {
+        if (!isSilent) {
+          setActionNotice({
+            type: "error",
+            message: "Network error occurred while fetching polls.",
+          });
+        }
+      } finally {
+        if (!isSilent) setIsLoading(false);
+        else setIsSilentSyncing(false);
       }
-    } catch {
-      setActionNotice({
-        type: "error",
-        message: "Network error occurred while fetching polls.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchQuery, categoryFilter, statusFilter]);
+    },
+    [searchQuery, categoryFilter, statusFilter]
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchPolls();
+      fetchPolls(false);
     }, 250);
     return () => clearTimeout(timer);
   }, [fetchPolls]);
+
+  // Live real-time polling interval (every 5 seconds)
+  useEffect(() => {
+    if (!isLiveAutoRefresh) return;
+    const interval = setInterval(() => {
+      fetchPolls(true);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchPolls, isLiveAutoRefresh]);
 
   const handleStatusChange = async (
     pollId: string,
@@ -207,18 +230,50 @@ export default function AdminPollsPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 text-[11px] text-zinc-500 border-t border-white/5">
-          <span>
-            {isLoading ? "Querying database..." : `Showing ${polls.length} poll records`}
-          </span>
-          <button
-            type="button"
-            onClick={() => fetchPolls()}
-            className="inline-flex items-center gap-1 text-zinc-400 hover:text-white transition-colors"
-          >
-            <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
-            <span>Refresh</span>
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-[11px] text-zinc-400 border-t border-white/5">
+          <div className="flex items-center gap-3">
+            <span>
+              {isLoading ? "Querying database..." : `Showing ${polls.length} poll records`}
+            </span>
+            <span className="text-zinc-600">•</span>
+            <span className="text-rose-400 font-semibold font-mono">
+              {polls.reduce((acc, p) => acc + (p.totalVotes || 0), 0).toLocaleString()} Total Votes Cast
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Live Auto-Refresh Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsLiveAutoRefresh((prev) => !prev)}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                isLiveAutoRefresh
+                  ? "bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40"
+                  : "bg-white/5 border border-white/10 text-zinc-400 hover:text-white"
+              }`}
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                {isLiveAutoRefresh && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span
+                  className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                    isLiveAutoRefresh ? "bg-emerald-400" : "bg-zinc-500"
+                  }`}
+                ></span>
+              </span>
+              <span>{isLiveAutoRefresh ? "Live Sync (5s): ON" : "Live Sync: OFF"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fetchPolls(false)}
+              className="inline-flex items-center gap-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`h-3 w-3 ${isLoading || isSilentSyncing ? "animate-spin" : ""}`} />
+              <span>{isSilentSyncing ? "Syncing..." : "Refresh"}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -231,6 +286,7 @@ export default function AdminPollsPage() {
                 <th className="py-3.5 px-4 sm:px-6">Question / Title</th>
                 <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Live Votes</th>
                 <th className="py-3.5 px-4">Views</th>
                 <th className="py-3.5 px-4">Published Date</th>
                 <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
@@ -239,14 +295,14 @@ export default function AdminPollsPage() {
             <tbody className="divide-y divide-white/5 text-zinc-300">
               {isLoading && polls.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-zinc-400">
+                  <td colSpan={7} className="py-12 text-center text-zinc-400">
                     <Loader2 className="mx-auto h-5 w-5 animate-spin text-rose-500 mb-2" />
                     <span>Loading database records...</span>
                   </td>
                 </tr>
               ) : polls.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="py-12 text-center text-zinc-500">
                     No polls found matching the current criteria. Click &quot;New Survey Draft&quot; to formulate a question.
                   </td>
                 </tr>
@@ -319,6 +375,33 @@ export default function AdminPollsPage() {
                           />
                           {poll.status}
                         </span>
+                      </td>
+
+                      {/* Live Votes Count */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 font-mono text-xs font-bold text-rose-300">
+                            {isPublished ? (
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                              </span>
+                            ) : (
+                              <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
+                            )}
+                            <span className="text-white">{(poll.totalVotes || 0).toLocaleString()}</span>
+                            <span className="text-[10px] text-zinc-400 font-normal">votes</span>
+                          </span>
+                          {poll.options && poll.options.length > 0 && (poll.totalVotes || 0) > 0 && (
+                            <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-mono">
+                              {poll.options.slice(0, 2).map((opt) => (
+                                <span key={opt.key} className="truncate max-w-[75px]">
+                                  {opt.key}: <strong className="text-zinc-300">{opt.votes}</strong>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-4 px-4 whitespace-nowrap">

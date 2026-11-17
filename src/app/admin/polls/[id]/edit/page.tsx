@@ -14,6 +14,9 @@ import {
   Plus,
   Trash2,
   Sparkles,
+  RefreshCw,
+  Radio,
+  Vote,
 } from "lucide-react";
 import { PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
@@ -23,6 +26,32 @@ interface EditPollPageProps {
   params: Promise<{ id: string }>;
 }
 
+interface LiveStatsOption {
+  key: string;
+  label: string;
+  votes: number;
+  percentage: number;
+}
+
+interface LivePollStats {
+  totalVotes: number;
+  views: number;
+  options: LiveStatsOption[];
+  lastVoteAt: string | null;
+  lastVoteOption: string | null;
+}
+
+function formatTimeAgo(date: Date) {
+  const diffSecs = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (diffSecs < 10) return "Just now";
+  if (diffSecs < 60) return `${diffSecs}s ago`;
+  const diffMins = Math.floor(diffSecs / 60);
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return date.toLocaleDateString();
+}
+
 export default function EditPollPage({ params }: EditPollPageProps) {
   const resolvedParams = use(params);
   const pollId = resolvedParams.id;
@@ -30,6 +59,13 @@ export default function EditPollPage({ params }: EditPollPageProps) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Live vote telemetry state
+  const [liveStats, setLiveStats] = useState<LivePollStats | null>(null);
+  const [isLiveStreaming, setIsLiveStreaming] = useState(true);
+  const [justIncremented, setJustIncremented] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -125,6 +161,17 @@ export default function EditPollPage({ params }: EditPollPageProps) {
             Array.isArray(p.seoKeywords) ? p.seoKeywords.join(", ") : ""
           );
 
+          if (p.totalVotes !== undefined) {
+            setLiveStats({
+              totalVotes: p.totalVotes,
+              views: p.views || 0,
+              options: p.options || [],
+              lastVoteAt: null,
+              lastVoteOption: null,
+            });
+            setLastUpdated(new Date());
+          }
+
           if (Array.isArray(p.options) && p.options.length >= 2) {
             setOptions(
               p.options.map((o: { key?: string; label?: string }, i: number) => ({
@@ -150,6 +197,70 @@ export default function EditPollPage({ params }: EditPollPageProps) {
       isMounted = false;
     };
   }, [pollId]);
+
+  const fetchLiveStatsDirect = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await fetch(`/api/admin/polls/${pollId}/live-stats`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.success) {
+        setLiveStats({
+          totalVotes: data.data.totalVotes,
+          views: data.data.views || 0,
+          options: data.data.options || [],
+          lastVoteAt: data.data.lastVoteAt,
+          lastVoteOption: data.data.lastVoteOption,
+        });
+        setLastUpdated(new Date());
+      }
+    } catch {
+      // silent
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isLiveStreaming || !pollId) return;
+
+    let isMounted = true;
+    let prevVotes: number | null = null;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/admin/polls/${pollId}/live-stats`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.success && isMounted) {
+          const currentTotal = data.data.totalVotes;
+          if (prevVotes !== null && currentTotal > prevVotes) {
+            setJustIncremented(true);
+            setTimeout(() => {
+              if (isMounted) setJustIncremented(false);
+            }, 2500);
+          }
+          prevVotes = currentTotal;
+
+          setLiveStats({
+            totalVotes: currentTotal,
+            views: data.data.views || 0,
+            options: data.data.options || [],
+            lastVoteAt: data.data.lastVoteAt,
+            lastVoteOption: data.data.lastVoteOption,
+          });
+          setLastUpdated(new Date());
+        }
+      } catch {
+        // silent polling catch
+      }
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [pollId, isLiveStreaming]);
 
   const handleAddCustomCategory = () => {
     const trimmed = customCategoryInput.trim();
@@ -362,6 +473,210 @@ export default function EditPollPage({ params }: EditPollPageProps) {
           </div>
         </div>
       )}
+
+      {/* LIVE BALLOT TELEMETRY & REAL-TIME VOTE COUNT */}
+      <div className="relative overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-[#151828] to-[#0c0d14] p-5 shadow-2xl">
+        <div className="absolute -top-12 -right-12 h-44 w-44 rounded-full bg-rose-500/15 blur-3xl pointer-events-none" />
+
+        {/* Telemetry Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-3 w-3">
+              {isLiveStreaming ? (
+                <>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </>
+              ) : (
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-zinc-500"></span>
+              )}
+            </span>
+            <div>
+              <h3 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+                <span>Live Citizen Ballot Telemetry</span>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  Live Count Active
+                </span>
+              </h3>
+              <p className="text-[11px] text-zinc-400 mt-0.5">
+                {isLiveStreaming
+                  ? "Streaming verified votes in real-time • Auto-sync every 3s"
+                  : "Live streaming paused"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsLiveStreaming((prev) => !prev)}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+                isLiveStreaming
+                  ? "border border-emerald-500/30 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50"
+                  : "border border-white/10 bg-white/5 text-zinc-400 hover:text-white"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${isLiveStreaming ? "bg-emerald-400" : "bg-zinc-500"}`} />
+              <span>{isLiveStreaming ? "Stream Active" : "Stream Paused"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fetchLiveStatsDirect()}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-zinc-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
+              title="Manual Instant Sync"
+            >
+              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+              <span>Sync</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Primary Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
+          {/* Total Votes */}
+          <div
+            className={`p-4 rounded-xl border transition-all duration-500 ${
+              justIncremented
+                ? "bg-emerald-950/50 border-emerald-500/80 shadow-[0_0_25px_rgba(16,185,129,0.3)] scale-[1.02]"
+                : "bg-[#0c0d16] border-rose-500/20"
+            }`}
+          >
+            <span className="text-[11px] font-semibold text-rose-300/80 uppercase tracking-wider block">
+              Total Verified Ballots
+            </span>
+            <div className="flex items-baseline gap-2 mt-1.5">
+              <span
+                className={`text-3xl font-extrabold font-mono tracking-tight transition-colors ${
+                  justIncremented ? "text-emerald-300 animate-pulse" : "text-white"
+                }`}
+              >
+                {(liveStats?.totalVotes ?? 0).toLocaleString()}
+              </span>
+              <span className="text-xs text-zinc-400">votes</span>
+            </div>
+            <span className="text-[10px] text-zinc-400 mt-1 block">
+              {justIncremented ? "🟢 New incoming ballot recorded!" : "Live tally for this poll"}
+            </span>
+          </div>
+
+          {/* Page Views */}
+          <div className="p-4 rounded-xl border border-white/5 bg-[#0c0d16]">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+              Page Impressions
+            </span>
+            <div className="flex items-baseline gap-2 mt-1.5">
+              <span className="text-3xl font-extrabold font-mono tracking-tight text-white">
+                {(liveStats?.views ?? 0).toLocaleString()}
+              </span>
+              <span className="text-xs text-zinc-400">views</span>
+            </div>
+            <span className="text-[10px] text-zinc-400 mt-1 block">
+              Total citizen inquiry visits
+            </span>
+          </div>
+
+          {/* Voter Turnout Rate */}
+          <div className="p-4 rounded-xl border border-white/5 bg-[#0c0d16]">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+              Turnout Rate
+            </span>
+            <div className="flex items-baseline gap-2 mt-1.5">
+              <span className="text-3xl font-extrabold font-mono tracking-tight text-emerald-400">
+                {liveStats && liveStats.views > 0
+                  ? `${Math.min(100, Math.round(((liveStats.totalVotes || 0) / liveStats.views) * 100))}%`
+                  : "0%"}
+              </span>
+              <span className="text-xs text-zinc-400">conversion</span>
+            </div>
+            <span className="text-[10px] text-zinc-400 mt-1 block">
+              Ballots cast vs readers
+            </span>
+          </div>
+
+          {/* Last Ballot Received */}
+          <div className="p-4 rounded-xl border border-white/5 bg-[#0c0d16]">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+              Last Ballot Activity
+            </span>
+            <div className="mt-1.5">
+              <span className="text-sm font-semibold text-zinc-200 line-clamp-1">
+                {liveStats?.lastVoteAt
+                  ? formatTimeAgo(new Date(liveStats.lastVoteAt))
+                  : "No votes recorded yet"}
+              </span>
+              {liveStats?.lastVoteOption && (
+                <span className="text-[10px] text-rose-400 font-mono block mt-0.5">
+                  Option: &quot;{liveStats.lastVoteOption}&quot;
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-zinc-400 mt-1 block">
+              {lastUpdated ? `Telemetry synced at ${lastUpdated.toLocaleTimeString()}` : "Initializing stream..."}
+            </span>
+          </div>
+        </div>
+
+        {/* Live Option Breakdown with Progress Bars */}
+        {liveStats && liveStats.options && liveStats.options.length > 0 && (
+          <div className="mt-5 pt-4 border-t border-white/10 space-y-3">
+            <div className="flex items-center justify-between text-xs font-semibold text-zinc-300">
+              <span className="flex items-center gap-1.5">
+                <Vote className="h-3.5 w-3.5 text-rose-400" />
+                <span>Live Option Vote Distribution</span>
+              </span>
+              <span className="font-mono text-[11px] text-zinc-400">
+                {liveStats.totalVotes} total verified
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {liveStats.options.map((opt, idx) => {
+                const colorGradients = [
+                  "from-rose-500 to-rose-600 bg-rose-500",
+                  "from-emerald-500 to-emerald-600 bg-emerald-500",
+                  "from-sky-500 to-sky-600 bg-sky-500",
+                  "from-amber-500 to-amber-600 bg-amber-500",
+                  "from-purple-500 to-purple-600 bg-purple-500",
+                ];
+                const grad = colorGradients[idx % colorGradients.length];
+
+                return (
+                  <div
+                    key={opt.key || idx}
+                    className="rounded-xl bg-white/[0.02] border border-white/5 p-3.5 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-mono font-bold text-zinc-400 uppercase text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/5">
+                          {opt.key}
+                        </span>
+                        <div className="flex items-center gap-2 font-mono text-xs">
+                          <span className="font-bold text-white">{opt.votes} votes</span>
+                          <span className="text-zinc-400">({opt.percentage}%)</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-zinc-200 font-medium line-clamp-2">
+                        {opt.label || `Option ${idx + 1}`}
+                      </p>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${grad} transition-all duration-700`}
+                          style={{ width: `${opt.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
       <form onSubmit={handleUpdate} className="space-y-6" noValidate>
         {/* Card 1: Question, Category, & Status */}

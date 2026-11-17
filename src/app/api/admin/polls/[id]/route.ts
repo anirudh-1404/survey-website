@@ -9,6 +9,7 @@ import { isCloudinaryAssetReferenced } from "@/lib/cloudinary-ref";
 import mongoose from "mongoose";
 import { submitUrlsForInstantIndexing } from "@/lib/indexing";
 import { absoluteUrl } from "@/lib/site-url";
+import { getPollVoteResults } from "@/lib/votes";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -41,6 +42,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return createErrorResponse("Poll inquiry not found", 404);
     }
 
+    const voteResults = await getPollVoteResults(poll._id);
+
     return createSuccessResponse({
       poll: {
         id: poll._id.toString(),
@@ -53,9 +56,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         editorialNote: poll.editorialNote || "",
         status: poll.status,
         featured: Boolean(poll.featured),
+        views: poll.views || 0,
+        totalVotes: voteResults.total,
+        voteResults: voteResults.byOption,
         publishedAt: poll.publishedAt ? new Date(poll.publishedAt).toISOString() : null,
         closesAt: poll.closesAt ? new Date(poll.closesAt).toISOString().slice(0, 16) : "",
-        options: poll.options || [],
+        options: (poll.options || []).map((opt) => ({
+          key: opt.key,
+          label: opt.label,
+          votes: voteResults.byOption[opt.key.toLowerCase()]?.count || 0,
+          percentage: voteResults.byOption[opt.key.toLowerCase()]?.percentage || 0,
+        })),
         imageUrl: poll.imageUrl || "",
         cloudinaryPublicId: poll.cloudinaryPublicId || "",
         imageAlt: poll.imageAlt || "",

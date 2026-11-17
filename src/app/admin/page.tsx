@@ -2,6 +2,8 @@ import Link from "next/link";
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import { User } from "@/models/User";
+import { VoteModel } from "@/models/Vote";
+import { getBatchPollVoteResults } from "@/lib/votes";
 import { getSiteAnalytics, getRecentVisits } from "@/lib/analytics";
 import {
   Layers,
@@ -17,6 +19,7 @@ import {
   Activity,
   Smartphone,
   Laptop,
+  Vote,
 } from "lucide-react";
 
 export default async function AdminOverviewPage() {
@@ -28,6 +31,7 @@ export default async function AdminOverviewPage() {
     draftPolls,
     closedPolls,
     totalUsers,
+    totalVotesCount,
     siteAnalytics,
     pollViewsAgg,
     recentPolls,
@@ -38,6 +42,7 @@ export default async function AdminOverviewPage() {
     PollModel.countDocuments({ status: "draft" }),
     PollModel.countDocuments({ status: "closed" }),
     User.countDocuments(),
+    VoteModel.countDocuments(),
     getSiteAnalytics(),
     PollModel.aggregate([
       { $group: { _id: null, totalViews: { $sum: "$views" } } },
@@ -49,6 +54,9 @@ export default async function AdminOverviewPage() {
       .lean(),
     getRecentVisits(6),
   ]);
+
+  const recentPollIds = recentPolls.map((p) => p._id);
+  const recentVotesMap = await getBatchPollVoteResults(recentPollIds);
 
   const totalPollViews = pollViewsAgg[0]?.totalViews || 0;
 
@@ -77,7 +85,22 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Summary Cards with Real MongoDB Counts */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {/* Verified Ballots Cast */}
+        <div className="rounded-xl border border-rose-500/30 bg-gradient-to-br from-[#18121f] to-[#10121a] p-5 space-y-2 shadow-lg">
+          <div className="flex items-center justify-between text-xs text-rose-300">
+            <span className="font-semibold">Verified Ballots Cast</span>
+            <Vote className="h-4 w-4 text-rose-400" />
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-white font-mono">
+            {totalVotesCount.toLocaleString()}
+          </p>
+          <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
+            <span>Citizen votes tallied</span>
+            <span className="text-[10px] text-rose-400 font-semibold font-mono">Live DB</span>
+          </div>
+        </div>
+
         {/* Website Traffic */}
         <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
@@ -202,6 +225,7 @@ export default async function AdminOverviewPage() {
                   <th className="pb-3 pr-4">Survey Title</th>
                   <th className="pb-3 px-4">Category</th>
                   <th className="pb-3 px-4">Status</th>
+                  <th className="pb-3 px-4">Votes</th>
                   <th className="pb-3 px-4">Views</th>
                   <th className="pb-3 px-4">Created Date</th>
                   <th className="pb-3 pl-4 text-right">Actions</th>
@@ -211,6 +235,7 @@ export default async function AdminOverviewPage() {
                 {recentPolls.map((poll) => {
                   const isPublished = poll.status === "published";
                   const isDraft = poll.status === "draft";
+                  const pollVoteCount = recentVotesMap.get(poll._id.toString())?.total || 0;
 
                   return (
                     <tr key={poll._id.toString()} className="hover:bg-white/[0.02]">
@@ -252,6 +277,18 @@ export default async function AdminOverviewPage() {
                             }`}
                           />
                           {poll.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 rounded bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 font-mono text-[11px] font-bold text-rose-300">
+                          {isPublished && (
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
+                          )}
+                          <span>{pollVoteCount.toLocaleString()}</span>
+                          <span className="text-[10px] text-zinc-400 font-normal">votes</span>
                         </span>
                       </td>
                       <td className="py-3.5 px-4 font-mono whitespace-nowrap text-zinc-300">
