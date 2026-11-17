@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Poll } from "@/types/poll";
-import { ArrowRight, BarChart2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { PollImage } from "@/components/polls/PollImage";
 
 interface PollCardProps {
@@ -59,25 +59,15 @@ export function PollCard({ poll }: PollCardProps) {
         </p>
       </div>
 
-      {/* Card Footer: Metadata & View Action */}
-      <div className="mt-6 border-t border-white/10 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-            <BarChart2 className="h-3.5 w-3.5 text-zinc-400" />
-            <span className="font-mono font-medium text-zinc-300">
-              {poll.totalVotes.toLocaleString()}
-            </span>
-            <span>votes</span>
-          </div>
-
-          <Link
-            href={`/polls/${poll.id}`}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-400 transition-colors group-hover:text-rose-300 focus-visible:ring-1 focus-visible:ring-rose-500"
-          >
-            <span>View Poll & Discourse</span>
-            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
+      {/* Card Footer: View Action */}
+      <div className="mt-6 border-t border-white/10 pt-4 flex items-center justify-end">
+        <Link
+          href={`/polls/${poll.id}`}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-rose-400 transition-colors group-hover:text-rose-300 focus-visible:ring-1 focus-visible:ring-rose-500"
+        >
+          <span>View Poll & Discourse</span>
+          <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+        </Link>
       </div>
     </article>
   );

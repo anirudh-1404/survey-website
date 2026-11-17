@@ -31,7 +31,6 @@ function getOrCreateVoterId(): string {
 
 export function FeaturedPoll({ poll }: FeaturedPollProps) {
   const [optionsState, setOptionsState] = useState<PollOption[]>(poll.options);
-  const [totalVotes, setTotalVotes] = useState(poll.totalVotes);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,7 +86,6 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
               }
             }
             if (voteData.data.results) {
-              setTotalVotes(voteData.data.results.total);
               if (voteData.data.results.byOption) {
                 setOptionsState((prev) =>
                   prev.map((opt) => {
@@ -165,7 +163,6 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
       });
 
       if (data.data?.results) {
-        setTotalVotes(data.data.results.total);
         if (data.data.results.byOption) {
           setOptionsState((prev) =>
             prev.map((opt) => {
@@ -281,8 +278,9 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
                   <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
                     Public Sentiment Snapshot
                   </span>
-                  <span className="text-xs font-mono font-medium text-zinc-300">
-                    {totalVotes.toLocaleString()} votes cast
+                  <span className="inline-flex items-center gap-1.5 text-xs text-rose-400 font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    <span>Live Balloting</span>
                   </span>
                 </div>
 

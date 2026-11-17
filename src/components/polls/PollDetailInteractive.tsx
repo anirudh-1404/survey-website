@@ -455,12 +455,6 @@ export function PollDetailInteractive({
                           {opt.label.split("—").slice(1).join("—").trim()}
                         </p>
                       )}
-
-                      {showResults && (
-                        <div className="mt-2 text-[10px] text-zinc-500 font-mono">
-                          {opt.votes.toLocaleString()} verified votes
-                        </div>
-                      )}
                     </button>
                   );
                 })}
