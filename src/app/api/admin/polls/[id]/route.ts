@@ -163,7 +163,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     if (body.closesAt !== undefined) {
-      poll.closesAt = body.closesAt ? new Date(body.closesAt as string) : undefined;
+      if (body.closesAt && typeof body.closesAt === "string" && body.closesAt.trim()) {
+        const parsed = new Date(body.closesAt.trim());
+        poll.closesAt = !isNaN(parsed.getTime()) ? parsed : undefined;
+      } else {
+        poll.closesAt = undefined;
+      }
     }
 
     if (body.featured !== undefined) {
@@ -279,10 +284,40 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
+    console.error("[Poll Update Error]:", error);
+
     if (error && typeof error === "object" && "statusCode" in error) {
       const err = error as { message: string; statusCode: number };
       return createErrorResponse(err.message, err.statusCode);
     }
+
+    if (
+      error &&
+      typeof error === "object" &&
+      ((error as { name?: string }).name === "ValidationError" || "errors" in error)
+    ) {
+      const valErr = error as { errors?: Record<string, { message: string }> };
+      const fieldErrors: Record<string, string> = {};
+      if (valErr.errors) {
+        for (const [key, item] of Object.entries(valErr.errors)) {
+          fieldErrors[key] = item.message;
+        }
+      }
+      const combined = Object.values(fieldErrors).join(". ");
+      return createErrorResponse(combined || "Validation error updating poll", 422, fieldErrors);
+    }
+
+    if (error && typeof error === "object" && (error as { code?: number }).code === 11000) {
+      return createErrorResponse(
+        "A poll with this question title or slug already exists in the database.",
+        409
+      );
+    }
+
+    if (error instanceof Error) {
+      return createErrorResponse(error.message, 500);
+    }
+
     return createErrorResponse("Failed to update poll inquiry", 500);
   }
 }

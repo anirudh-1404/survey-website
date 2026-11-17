@@ -106,8 +106,8 @@ export default function CreatePollPage() {
 
     if (!summary.trim()) {
       errs.summary = "A brief contextual summary is required.";
-    } else if (summary.trim().length < 20) {
-      errs.summary = "Summary should be at least 20 characters long.";
+    } else if (summary.trim().length < 10) {
+      errs.summary = "Summary should be at least 10 characters long.";
     }
 
     if (!options || options.length < 2) {
@@ -153,6 +153,14 @@ export default function CreatePollPage() {
         return { key, label };
       });
 
+      let formattedClosesAt: string | null = null;
+      if (closesAt && closesAt.trim()) {
+        const d = new Date(closesAt.trim());
+        if (!isNaN(d.getTime())) {
+          formattedClosesAt = d.toISOString();
+        }
+      }
+
       const res = await fetch("/api/admin/polls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,11 +168,11 @@ export default function CreatePollPage() {
           title: title.trim(),
           category,
           summary: summary.trim(),
-          context: context.trim(),
-          sourceReference: sourceReference.trim(),
-          editorialNote: editorialNote.trim(),
+          context: context.trim() || undefined,
+          sourceReference: sourceReference.trim() || undefined,
+          editorialNote: editorialNote.trim() || undefined,
           status: targetStatus,
-          closesAt: closesAt ? new Date(closesAt).toISOString() : null,
+          closesAt: formattedClosesAt,
           featured,
           options: formattedOptions,
           imageUrl: imageUrl.trim() || undefined,

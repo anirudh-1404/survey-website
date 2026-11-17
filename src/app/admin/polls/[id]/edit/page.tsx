@@ -217,6 +217,14 @@ export default function EditPollPage({ params }: EditPollPageProps) {
         return { key, label };
       });
 
+      let formattedClosesAt: string | null = null;
+      if (closesAt && closesAt.trim()) {
+        const d = new Date(closesAt.trim());
+        if (!isNaN(d.getTime())) {
+          formattedClosesAt = d.toISOString();
+        }
+      }
+
       const res = await fetch(`/api/admin/polls/${pollId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -224,11 +232,11 @@ export default function EditPollPage({ params }: EditPollPageProps) {
           title: title.trim(),
           category,
           summary: summary.trim(),
-          context: context.trim(),
-          sourceReference: sourceReference.trim(),
-          editorialNote: editorialNote.trim(),
+          context: context.trim() || undefined,
+          sourceReference: sourceReference.trim() || undefined,
+          editorialNote: editorialNote.trim() || undefined,
           status,
-          closesAt: closesAt ? new Date(closesAt).toISOString() : null,
+          closesAt: formattedClosesAt,
           featured,
           options: formattedOptions,
           imageUrl: imageUrl.trim() || "",

@@ -44,7 +44,7 @@ const PollOptionSchema = new Schema<IPollOption>(
       type: String,
       required: true,
       trim: true,
-      maxlength: [200, "Option label cannot exceed 200 characters"],
+      maxlength: [500, "Option label cannot exceed 500 characters"],
     },
   },
   { _id: false }
@@ -79,23 +79,23 @@ const PollSchema = new Schema<IPoll>(
       type: String,
       required: [true, "Summary is required"],
       trim: true,
-      minlength: [20, "Summary must be at least 20 characters long"],
-      maxlength: [600, "Summary cannot exceed 600 characters"],
+      minlength: [10, "Summary must be at least 10 characters long"],
+      maxlength: [2500, "Summary cannot exceed 2500 characters"],
     },
     context: {
       type: String,
       trim: true,
-      maxlength: [3000, "Editorial context cannot exceed 3000 characters"],
+      maxlength: [10000, "Editorial context cannot exceed 10000 characters"],
     },
     sourceReference: {
       type: String,
       trim: true,
-      maxlength: [300, "Source reference cannot exceed 300 characters"],
+      maxlength: [1000, "Source reference cannot exceed 1000 characters"],
     },
     editorialNote: {
       type: String,
       trim: true,
-      maxlength: [200, "Editorial note cannot exceed 200 characters"],
+      maxlength: [1000, "Editorial note cannot exceed 1000 characters"],
     },
     createdBy: {
       type: Schema.Types.ObjectId,

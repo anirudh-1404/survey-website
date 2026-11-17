@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
       errors.category = "Please select or enter a valid category (at least 2 characters)";
     }
 
-    if (!summary || typeof summary !== "string" || summary.trim().length < 20) {
-      errors.summary = "Editorial summary must be at least 20 characters long";
+    if (!summary || typeof summary !== "string" || summary.trim().length < 10) {
+      errors.summary = "Editorial summary must be at least 10 characters long";
     }
 
     // Validate image URL if provided
@@ -202,6 +202,29 @@ export async function POST(request: NextRequest) {
         .filter(Boolean);
     }
 
+    const cleanContext =
+      typeof context === "string" && context.trim()
+        ? context.trim().slice(0, 10000)
+        : undefined;
+
+    const cleanSourceReference =
+      typeof sourceReference === "string" && sourceReference.trim()
+        ? sourceReference.trim().slice(0, 1000)
+        : undefined;
+
+    const cleanEditorialNote =
+      typeof editorialNote === "string" && editorialNote.trim()
+        ? editorialNote.trim().slice(0, 1000)
+        : undefined;
+
+    let parsedClosesAt: Date | undefined = undefined;
+    if (closesAt && typeof closesAt === "string" && closesAt.trim()) {
+      const parsedDate = new Date(closesAt.trim());
+      if (!isNaN(parsedDate.getTime())) {
+        parsedClosesAt = parsedDate;
+      }
+    }
+
     const cleanMetaTitle =
       typeof metaTitle === "string" && metaTitle.trim()
         ? metaTitle.trim().slice(0, 200)
@@ -209,7 +232,7 @@ export async function POST(request: NextRequest) {
 
     const cleanMetaDescription =
       typeof metaDescription === "string" && metaDescription.trim()
-        ? metaDescription.trim().slice(0, 500)
+        ? metaDescription.trim().slice(0, 1000)
         : undefined;
 
     const poll = await PollModel.create({
@@ -217,13 +240,13 @@ export async function POST(request: NextRequest) {
       slug,
       category: category as PollCategory,
       summary: (summary as string).trim(),
-      context: typeof context === "string" ? context.trim() : undefined,
-      sourceReference: typeof sourceReference === "string" ? sourceReference.trim() : undefined,
-      editorialNote: typeof editorialNote === "string" ? editorialNote.trim() : undefined,
+      context: cleanContext,
+      sourceReference: cleanSourceReference,
+      editorialNote: cleanEditorialNote,
       createdBy: user.id, // Strictly derived from session, never from client body
       status,
       publishedAt: status === "published" ? now : undefined,
-      closesAt: closesAt ? new Date(closesAt as string) : undefined,
+      closesAt: parsedClosesAt,
       featured: Boolean(featured),
       options: parsedOptions,
       imageUrl: cleanImageUrl,
@@ -263,10 +286,42 @@ export async function POST(request: NextRequest) {
       201
     );
   } catch (error) {
+    console.error("[Poll Create Error]:", error);
+
     if (error && typeof error === "object" && "statusCode" in error) {
       const err = error as { message: string; statusCode: number };
       return createErrorResponse(err.message, err.statusCode);
     }
+
+    // Mongoose Validation Error
+    if (
+      error &&
+      typeof error === "object" &&
+      ((error as { name?: string }).name === "ValidationError" || "errors" in error)
+    ) {
+      const valErr = error as { errors?: Record<string, { message: string }> };
+      const fieldErrors: Record<string, string> = {};
+      if (valErr.errors) {
+        for (const [key, item] of Object.entries(valErr.errors)) {
+          fieldErrors[key] = item.message;
+        }
+      }
+      const combined = Object.values(fieldErrors).join(". ");
+      return createErrorResponse(combined || "Validation error saving poll", 422, fieldErrors);
+    }
+
+    // Duplicate Key Error
+    if (error && typeof error === "object" && (error as { code?: number }).code === 11000) {
+      return createErrorResponse(
+        "A poll with this question title or slug already exists in the database.",
+        409
+      );
+    }
+
+    if (error instanceof Error) {
+      return createErrorResponse(error.message, 500);
+    }
+
     return createErrorResponse("Failed to create poll inquiry", 500);
   }
 }
