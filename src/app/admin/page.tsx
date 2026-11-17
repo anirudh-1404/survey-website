@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import { User } from "@/models/User";
 import { VoteModel } from "@/models/Vote";
+import { ContactSubmissionModel } from "@/models/ContactSubmission";
 import { getBatchPollVoteResults } from "@/lib/votes";
 import { getSiteAnalytics, getRecentVisits } from "@/lib/analytics";
 import {
@@ -20,6 +21,7 @@ import {
   Smartphone,
   Laptop,
   Vote,
+  Inbox,
 } from "lucide-react";
 
 export default async function AdminOverviewPage() {
@@ -32,6 +34,8 @@ export default async function AdminOverviewPage() {
     closedPolls,
     totalUsers,
     totalVotesCount,
+    totalContactSubmissions,
+    unreadContactSubmissions,
     siteAnalytics,
     pollViewsAgg,
     recentPolls,
@@ -43,6 +47,8 @@ export default async function AdminOverviewPage() {
     PollModel.countDocuments({ status: "closed" }),
     User.countDocuments(),
     VoteModel.countDocuments(),
+    ContactSubmissionModel.countDocuments(),
+    ContactSubmissionModel.countDocuments({ status: "unread" }),
     getSiteAnalytics(),
     PollModel.aggregate([
       { $group: { _id: null, totalViews: { $sum: "$views" } } },
@@ -55,7 +61,7 @@ export default async function AdminOverviewPage() {
     getRecentVisits(6),
   ]);
 
-  const recentPollIds = recentPolls.map((p) => p._id);
+  const recentPollIds = (recentPolls as any[]).map((p: any) => p._id);
   const recentVotesMap = await getBatchPollVoteResults(recentPollIds);
 
   const totalPollViews = pollViewsAgg[0]?.totalViews || 0;
@@ -134,14 +140,14 @@ export default async function AdminOverviewPage() {
         {/* Total Polls */}
         <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span>Total Inquiries</span>
+            <span>Total Polls</span>
             <Layers className="h-4 w-4 text-zinc-400" />
           </div>
           <p className="text-2xl font-bold tracking-tight text-white font-mono">
             {totalPolls}
           </p>
           <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
-            <span>In catalog</span>
+            <span>Catalog Surveys</span>
             <span className="text-[10px] text-emerald-400 font-medium">Live DB</span>
           </div>
         </div>
@@ -149,7 +155,7 @@ export default async function AdminOverviewPage() {
         {/* Published Polls */}
         <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
           <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span>Published Live</span>
+            <span>Live Active Polls</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           </div>
           <p className="text-2xl font-bold tracking-tight text-white font-mono">
@@ -157,7 +163,7 @@ export default async function AdminOverviewPage() {
           </p>
           <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
             <span>Visible to public</span>
-            <span className="text-[10px] text-emerald-400 font-medium">Live Feed</span>
+            <span className="text-[10px] text-emerald-400 font-medium">Public Feed</span>
           </div>
         </div>
 
@@ -173,6 +179,33 @@ export default async function AdminOverviewPage() {
           <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
             <span>{closedPolls} closed</span>
             <span className="text-[10px] text-amber-400/80 uppercase">Private</span>
+          </div>
+        </div>
+
+        {/* Contact Form Inquiries */}
+        <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Contact Form Inquiries</span>
+            <Inbox className="h-4 w-4 text-amber-400" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold tracking-tight text-white font-mono">
+              {totalContactSubmissions}
+            </p>
+            {unreadContactSubmissions > 0 && (
+              <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                {unreadContactSubmissions} unread
+              </span>
+            )}
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
+            <span>User messages</span>
+            <Link
+              href="/admin/contact-submissions"
+              className="text-[10px] text-rose-400 hover:text-rose-300 font-medium"
+            >
+              View Inbox →
+            </Link>
           </div>
         </div>
 
@@ -232,7 +265,7 @@ export default async function AdminOverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-zinc-300">
-                {recentPolls.map((poll) => {
+                {(recentPolls as any[]).map((poll: any) => {
                   const isPublished = poll.status === "published";
                   const isDraft = poll.status === "draft";
                   const pollVoteCount = recentVotesMap.get(poll._id.toString())?.total || 0;
@@ -375,7 +408,7 @@ export default async function AdminOverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-zinc-300">
-                {recentVisits.map((visit) => {
+                {(recentVisits as any[]).map((visit: any) => {
                   const isUser = Boolean(visit.user?.name);
 
                   return (
