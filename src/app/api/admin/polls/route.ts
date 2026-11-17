@@ -4,6 +4,8 @@ import { PollModel } from "@/models/Poll";
 import { requireAdmin, verifyCsrfOrigin, createErrorResponse, createSuccessResponse } from "@/lib/auth";
 import { generateUniqueSlug } from "@/lib/polls";
 import { PollCategory } from "@/types/poll";
+import { submitUrlsForInstantIndexing } from "@/lib/indexing";
+import { absoluteUrl } from "@/lib/site-url";
 
 /**
  * GET /api/admin/polls
@@ -238,6 +240,17 @@ export async function POST(request: NextRequest) {
         { _id: { $ne: poll._id } },
         { $set: { featured: false } }
       );
+    }
+
+    // Auto-trigger Instant Indexing for published polls in the background
+    if (poll.status === "published" && poll.slug) {
+      submitUrlsForInstantIndexing([
+        absoluteUrl(`/polls/${poll.slug}`),
+        absoluteUrl("/polls"),
+        absoluteUrl("/"),
+      ]).catch((err) => {
+        console.error("Auto-indexing background error:", err);
+      });
     }
 
     return createSuccessResponse(

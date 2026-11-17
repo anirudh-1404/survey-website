@@ -13,6 +13,7 @@ import {
   FileText,
   Megaphone,
   Activity,
+  Zap,
   X,
 } from "lucide-react";
 import { SayNowLogo } from "@/components/layout/SayNowLogo";
@@ -45,6 +46,12 @@ export function AdminSidebar({
       label: "Audience & Traffic",
       href: "/admin/traffic",
       icon: Activity,
+      exact: false,
+    },
+    {
+      label: "Instant SEO Indexer",
+      href: "/admin/indexing",
+      icon: Zap,
       exact: false,
     },
     {

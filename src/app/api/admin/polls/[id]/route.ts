@@ -7,6 +7,8 @@ import { PollCategory } from "@/types/poll";
 import { validateExternalImageUrl, deleteImageFromCloudinary } from "@/lib/cloudinary";
 import { isCloudinaryAssetReferenced } from "@/lib/cloudinary-ref";
 import mongoose from "mongoose";
+import { submitUrlsForInstantIndexing } from "@/lib/indexing";
+import { absoluteUrl } from "@/lib/site-url";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -252,6 +254,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     await poll.save();
+
+    // Auto-trigger Instant Indexing if poll is published
+    if (poll.status === "published" && poll.slug) {
+      submitUrlsForInstantIndexing([
+        absoluteUrl(`/polls/${poll.slug}`),
+        absoluteUrl("/polls"),
+        absoluteUrl("/"),
+      ]).catch((err) => {
+        console.error("Auto-indexing background error:", err);
+      });
+    }
 
     return createSuccessResponse({
       poll: {
