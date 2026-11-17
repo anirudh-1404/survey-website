@@ -6,7 +6,6 @@ import { Poll, PollOption, PollComment } from "@/types/poll";
 import {
   Check,
   Info,
-  BarChart3,
   MessageSquare,
   AlertCircle,
   Share2,
@@ -517,12 +516,8 @@ export function PollDetailInteractive({
             )}
 
 
-            {/* Integrity / Share Actions */}
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-zinc-400">
-              <span className="flex items-center gap-1 text-[11px]">
-                <BarChart3 className="h-3.5 w-3.5 text-rose-400" />
-                <span>MongoDB Cryptographic Tally</span>
-              </span>
+            {/* Share Action */}
+            <div className="pt-3 border-t border-white/10 flex items-center justify-end text-xs text-zinc-400">
               <button
                 type="button"
                 onClick={handleShare}
@@ -539,7 +534,7 @@ export function PollDetailInteractive({
             <Info className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               <strong className="text-zinc-300">Verified Database Tally:</strong> Ballots are
-              hashed and tallied server-side directly in MongoDB. Unique compound indexing guarantees
+              hashed and tallied securely server-side. Unique compound indexing guarantees
               each citizen holds exactly one non-duplicable ballot per inquiry.
             </p>
           </div>
