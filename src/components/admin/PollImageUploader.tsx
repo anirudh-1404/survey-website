@@ -346,14 +346,20 @@ export function PollImageUploader({
             </div>
           </div>
 
-          {/* Aspect-Ratio Image Container */}
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-[#07080c]">
+          {/* Uncropped Image Preview Container */}
+          <div className="relative w-full overflow-hidden rounded-lg border border-white/10 bg-[#07080c] flex items-center justify-center p-2 min-h-[200px]">
+            {/* Ambient blurred backdrop */}
+            <div
+              className="absolute inset-0 bg-cover bg-center filter blur-2xl opacity-20 scale-110 pointer-events-none"
+              style={{ backgroundImage: `url(${imageUrl})` }}
+              aria-hidden="true"
+            />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
               alt={altInput || "Poll featured preview"}
               onError={() => setPreviewError(true)}
-              className="h-full w-full object-cover transition-opacity duration-300"
+              className="relative z-10 max-h-[380px] w-full object-contain mx-auto rounded transition-opacity duration-300"
             />
           </div>
 

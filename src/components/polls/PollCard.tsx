@@ -20,6 +20,7 @@ export function PollCard({ poll }: PollCardProps) {
           title={poll.title}
           category={poll.category}
           aspectRatio="16/9"
+          objectFit="contain"
           className="!border-0 !border-b !border-white/10"
         />
       </div>

@@ -9,8 +9,10 @@ interface PollImageProps {
   title: string;
   category?: string;
   aspectRatio?: "16/9" | "21/9" | "auto";
+  objectFit?: "cover" | "contain";
   className?: string;
   priority?: boolean;
+  showOverlay?: boolean;
 }
 
 function renderCategoryIcon(category?: string) {
@@ -37,11 +39,15 @@ export function PollImage({
   imageAlt,
   title,
   category,
-  aspectRatio = "16/9",
+  aspectRatio = "auto",
+  objectFit = "contain",
   className = "",
   priority = false,
+  showOverlay = false,
 }: PollImageProps) {
   const [hasError, setHasError] = useState(false);
+
+  const isContain = objectFit === "contain" || aspectRatio === "auto";
 
   const aspectClass =
     aspectRatio === "21/9"
@@ -54,19 +60,37 @@ export function PollImage({
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-[#0a0c14] border border-white/10 ${aspectClass} ${className}`}
+      className={`relative w-full overflow-hidden bg-[#0a0c14] border border-white/10 ${aspectClass} ${
+        isContain ? "flex items-center justify-center min-h-[200px]" : ""
+      } ${className}`}
     >
       {showImage ? (
         <>
+          {/* Ambient blurred backdrop for letterbox areas when using object-contain */}
+          {isContain && (
+            <div
+              className="absolute inset-0 bg-cover bg-center filter blur-3xl opacity-25 scale-110 pointer-events-none"
+              style={{ backgroundImage: `url(${imageUrl})` }}
+              aria-hidden="true"
+            />
+          )}
+
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={imageAlt || title}
-            className="h-full w-full object-cover transition-transform duration-300"
+            className={`transition-transform duration-300 ${
+              isContain
+                ? "relative z-10 w-full h-auto max-h-[640px] object-contain mx-auto block"
+                : "h-full w-full object-cover"
+            }`}
             loading={priority ? "eager" : "lazy"}
             onError={() => setHasError(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#10121a]/80 via-transparent to-transparent pointer-events-none" />
+
+          {showOverlay && (
+            <div className="absolute inset-0 z-20 bg-gradient-to-t from-[#10121a]/80 via-transparent to-transparent pointer-events-none" />
+          )}
         </>
       ) : (
         /* Graceful editorial placeholder when image is absent or fails to load */

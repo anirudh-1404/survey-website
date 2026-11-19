@@ -246,7 +246,8 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
                   imageAlt={poll.imageAlt}
                   title={poll.title}
                   category={poll.category}
-                  aspectRatio="21/9"
+                  aspectRatio="auto"
+                  objectFit="contain"
                   priority={true}
                   className="!border-0"
                 />

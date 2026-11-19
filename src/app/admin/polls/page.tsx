@@ -323,7 +323,7 @@ export default function AdminPollsPage() {
                               <img
                                 src={poll.imageUrl}
                                 alt={poll.imageAlt || poll.title}
-                                className="h-full w-full object-cover"
+                                className="h-full w-full object-contain"
                                 loading="lazy"
                               />
                             </div>

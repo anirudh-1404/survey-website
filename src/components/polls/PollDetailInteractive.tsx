@@ -297,14 +297,15 @@ export function PollDetailInteractive({
             {poll.title}
           </h1>
 
-          {/* Featured Poll Image with graceful fallback */}
-          <div className="rounded-xl overflow-hidden border border-white/10 shadow-xl">
+          {/* Featured Poll Image with graceful fallback - full uncropped view */}
+          <div className="rounded-xl overflow-hidden border border-white/10 shadow-xl bg-[#0a0c14]">
             <PollImage
               imageUrl={poll.imageUrl}
               imageAlt={poll.imageAlt}
               title={poll.title}
               category={poll.category}
-              aspectRatio="21/9"
+              aspectRatio="auto"
+              objectFit="contain"
               priority={true}
               className="!border-0"
             />
