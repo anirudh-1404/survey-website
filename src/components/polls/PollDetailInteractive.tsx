@@ -78,6 +78,21 @@ export function PollDetailInteractive({
     }
   }, [poll.id, isAuthenticated, initialHasVoted]);
 
+  // Record view count strictly on client-side for real human visitors
+  // Social media link preview scrapers (WhatsApp, Telegram, etc.) do NOT run JS
+  // Deduplicate with sessionStorage so repeated refreshes in the same tab don't inflate views
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sessionKey = `saynow_pv_${poll.id}`;
+    if (!sessionStorage.getItem(sessionKey)) {
+      sessionStorage.setItem(sessionKey, "1");
+      fetch(`/api/polls/${poll.id}/view`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }).catch(() => {});
+    }
+  }, [poll.id]);
+
   // --- Voting State ---
   const [hasVoted, setHasVoted] = useState(initialHasVoted);
   const [userVote, setUserVote] = useState<string | null>(initialUserVote || null);
