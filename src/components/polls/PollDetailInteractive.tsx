@@ -22,6 +22,7 @@ import {
 import { PollImage } from "@/components/polls/PollImage";
 import { toast } from "sonner";
 import { PollChat } from "@/components/chat/PollChat";
+import { PollEditorialContext } from "@/components/polls/PollEditorialContext";
 import { AdBanner } from "@/components/ads/AdBanner";
 
 const MULTI_OPTION_THEMES = [
@@ -310,37 +311,24 @@ export function PollDetailInteractive({
           </div>
 
           {/* Poll Description / Short Summary */}
-          <div className="rounded-xl border border-white/10 bg-[#10121a] p-6 space-y-3">
-            <h2 className="text-xs font-bold tracking-wider uppercase text-zinc-400">
-              Overview & Background
-            </h2>
-            <p className="text-base leading-relaxed text-zinc-200 sm:text-lg">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#101320] to-[#0c0e17] p-6 sm:p-7 space-y-3 shadow-lg">
+            <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-zinc-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span>Overview & Core Premise</span>
+            </div>
+            <p className="text-base leading-relaxed text-zinc-200 sm:text-lg font-medium">
               {poll.summary}
             </p>
           </div>
 
-          {/* Supporting Information (Context & Sourcing) */}
+          {/* Supporting Information (Editorial Dossier & Citations) */}
           {poll.context && (
-            <div className="rounded-xl border border-white/10 bg-[#12141e] p-6 text-sm leading-relaxed text-zinc-300 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-rose-400 uppercase">
-                <Shield className="h-3.5 w-3.5" />
-                <span>Editorial Context & Analytical Background</span>
-              </div>
-              <p className="text-zinc-300 text-sm leading-relaxed">
-                {poll.context}
-              </p>
-              {poll.sourceReference && (
-                <div className="pt-3 text-xs text-zinc-400 flex items-center gap-1.5 border-t border-white/5">
-                  <ExternalLink className="h-3 w-3 text-zinc-500" />
-                  <span>
-                    Reference:{" "}
-                    <span className="text-zinc-200 font-medium">
-                      {poll.sourceReference}
-                    </span>
-                  </span>
-                </div>
-              )}
-            </div>
+            <PollEditorialContext
+              context={poll.context}
+              sourceReference={poll.sourceReference}
+              editorialNote={poll.editorialNote}
+              category={poll.category}
+            />
           )}
         </div>
 

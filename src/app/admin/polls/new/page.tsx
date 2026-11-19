@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { toast } from "sonner";
 
 export default function CreatePollPage() {
@@ -496,20 +497,23 @@ export default function CreatePollPage() {
             )}
           </div>
 
-          <div>
-            <label
-              htmlFor="poll-context"
-              className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5"
-            >
-              Detailed Background & Argument Framing (Optional)
-            </label>
-            <textarea
-              id="poll-context"
-              rows={3}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="poll-context"
+                className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
+              >
+                Detailed Background & Editorial Context (Rich Text)
+              </label>
+              <span className="text-[11px] text-zinc-400 font-medium">
+                Supports Bold, Italic, Headings, Lists, Quotes & Links
+              </span>
+            </div>
+            <RichTextEditor
               value={context}
-              onChange={(e) => setContext(e.target.value)}
-              placeholder="Outline the main perspectives, counterarguments, and potential societal impacts..."
-              className="w-full rounded-lg border border-white/10 bg-[#151824] px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-500 resize-none"
+              onChange={setContext}
+              placeholder="Outline the main perspectives, counterarguments, statistical citations, and potential societal impacts..."
+              minHeight="220px"
             />
           </div>
 

@@ -85,7 +85,7 @@ const PollSchema = new Schema<IPoll>(
     context: {
       type: String,
       trim: true,
-      maxlength: [10000, "Editorial context cannot exceed 10000 characters"],
+      maxlength: [25000, "Editorial context cannot exceed 25000 characters"],
     },
     sourceReference: {
       type: String,

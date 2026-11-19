@@ -7,6 +7,7 @@ import { PollCategory } from "@/types/poll";
 import { submitUrlsForInstantIndexing } from "@/lib/indexing";
 import { absoluteUrl } from "@/lib/site-url";
 import { getBatchPollVoteResults } from "@/lib/votes";
+import { sanitizeRichTextHtml } from "@/lib/blog-utils";
 
 /**
  * GET /api/admin/polls
@@ -220,7 +221,7 @@ export async function POST(request: NextRequest) {
 
     const cleanContext =
       typeof context === "string" && context.trim()
-        ? context.trim().slice(0, 10000)
+        ? sanitizeRichTextHtml(context.trim()).slice(0, 25000)
         : undefined;
 
     const cleanSourceReference =

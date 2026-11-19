@@ -10,6 +10,7 @@ import mongoose from "mongoose";
 import { submitUrlsForInstantIndexing } from "@/lib/indexing";
 import { absoluteUrl } from "@/lib/site-url";
 import { getPollVoteResults } from "@/lib/votes";
+import { sanitizeRichTextHtml } from "@/lib/blog-utils";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -162,7 +163,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     if (body.context !== undefined) {
-      poll.context = typeof body.context === "string" ? body.context.trim() : "";
+      poll.context = typeof body.context === "string" ? sanitizeRichTextHtml(body.context.trim()).slice(0, 25000) : "";
     }
 
     if (body.sourceReference !== undefined) {

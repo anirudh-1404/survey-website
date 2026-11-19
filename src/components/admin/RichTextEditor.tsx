@@ -6,6 +6,7 @@ import {
   Heading3,
   Bold,
   Italic,
+  Underline,
   List,
   ListOrdered,
   Quote,
@@ -71,6 +72,21 @@ export function RichTextEditor({
         start + before.length + (selected ? selected.length : 4)
       );
     }, 10);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.metaKey || e.ctrlKey) {
+      if (e.key === "b" || e.key === "B") {
+        e.preventDefault();
+        insertFormatting("<strong>", "</strong>");
+      } else if (e.key === "i" || e.key === "I") {
+        e.preventDefault();
+        insertFormatting("<em>", "</em>");
+      } else if (e.key === "u" || e.key === "U") {
+        e.preventDefault();
+        insertFormatting("<u>", "</u>");
+      }
+    }
   };
 
   const handleApplyLink = (e: React.FormEvent) => {
@@ -171,7 +187,7 @@ export function RichTextEditor({
           {/* Inline Styles */}
           <button
             type="button"
-            title="Bold"
+            title="Bold (Ctrl+B)"
             onClick={() => insertFormatting("<strong>", "</strong>")}
             className="rounded p-1.5 text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
           >
@@ -179,11 +195,19 @@ export function RichTextEditor({
           </button>
           <button
             type="button"
-            title="Italic"
+            title="Italic (Ctrl+I)"
             onClick={() => insertFormatting("<em>", "</em>")}
             className="rounded p-1.5 text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
           >
             <Italic className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            title="Underline (Ctrl+U)"
+            onClick={() => insertFormatting("<u>", "</u>")}
+            className="rounded p-1.5 text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+          >
+            <Underline className="h-4 w-4" />
           </button>
 
           <span className="h-4 w-[1px] bg-white/10 mx-1" />
@@ -292,6 +316,7 @@ export function RichTextEditor({
               ref={textareaRef}
               value={value}
               onChange={(e) => onChange(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={placeholder}
               className="flex-1 w-full bg-transparent p-5 text-sm font-mono text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed"
               style={{ minHeight }}
