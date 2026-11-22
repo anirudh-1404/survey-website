@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import { requireAdmin, verifyCsrfOrigin, createErrorResponse, createSuccessResponse } from "@/lib/auth";
-import { generateUniqueSlug } from "@/lib/polls";
+import { generateUniqueSlug, slugify } from "@/lib/polls";
 import { PollCategory } from "@/types/poll";
 import { validateExternalImageUrl, deleteImageFromCloudinary } from "@/lib/cloudinary";
 import { isCloudinaryAssetReferenced } from "@/lib/cloudinary-ref";
@@ -140,6 +140,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // 2. Content Updates
+    if (typeof body.slug === "string" && body.slug.trim()) {
+      const sanitizedSlug = slugify(body.slug);
+      if (sanitizedSlug.length < 2) {
+        return createErrorResponse("URL slug must be at least 2 characters long", 422);
+      }
+      if (sanitizedSlug !== poll.slug) {
+        const conflict = await PollModel.findOne({
+          slug: sanitizedSlug,
+          _id: { $ne: poll._id },
+        }).lean();
+        if (conflict) {
+          return createErrorResponse(
+            `URL slug "${sanitizedSlug}" is already in use by another poll. Please choose a unique slug.`,
+            409
+          );
+        }
+        poll.slug = sanitizedSlug;
+      }
+    }
+
     if (typeof body.title === "string" && body.title.trim()) {
       const newTitle = body.title.trim();
       if (newTitle.length < 10) {
@@ -147,7 +167,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
       if (newTitle !== poll.title) {
         poll.title = newTitle;
-        poll.slug = await generateUniqueSlug(newTitle, poll._id.toString());
+        if (!body.slug && !poll.slug) {
+          poll.slug = await generateUniqueSlug(newTitle, poll._id.toString());
+        }
       }
     }
 

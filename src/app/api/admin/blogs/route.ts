@@ -159,6 +159,12 @@ export async function POST(request: NextRequest) {
     // Check slug uniqueness
     const existing = await BlogModel.findOne({ slug: finalSlug }).lean();
     if (existing) {
+      if (customSlug && typeof customSlug === "string" && customSlug.trim()) {
+        return createErrorResponse(
+          `URL slug "${finalSlug}" is already in use by another article. Please enter a unique slug.`,
+          409
+        );
+      }
       finalSlug = `${finalSlug}-${Date.now().toString().slice(-4)}`;
     }
 

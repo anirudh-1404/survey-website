@@ -25,6 +25,7 @@ import { PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { PollChat } from "@/components/chat/PollChat";
+import { generateSlug } from "@/lib/blog-utils";
 import { toast } from "sonner";
 
 interface EditPollPageProps {
@@ -284,6 +285,19 @@ export default function EditPollPage({ params }: EditPollPageProps) {
       .catch(() => {});
   }, []);
 
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+      .toLowerCase()
+      .replace(/[^a-z0-9 -]/g, "")
+      .replace(/\s+/g, "-");
+    setSlug(raw);
+    if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
+  };
+
+  const handleSlugBlur = () => {
+    setSlug((prev) => generateSlug(prev));
+  };
+
   const handleAddCustomCategory = () => {
     const trimmed = customCategoryInput.trim();
     if (!trimmed) {
@@ -363,6 +377,7 @@ export default function EditPollPage({ params }: EditPollPageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
+          slug: slug.trim() ? generateSlug(slug) : undefined,
           category,
           summary: summary.trim(),
           context: context.trim() || undefined,
@@ -385,9 +400,16 @@ export default function EditPollPage({ params }: EditPollPageProps) {
       if (!res.ok) {
         const updateErr = data.error || "Failed to persist poll updates.";
         setFeedback({ type: "error", message: updateErr });
+        if (updateErr.toLowerCase().includes("slug")) {
+          setErrors((prev) => ({ ...prev, slug: updateErr }));
+        }
         toast.error(updateErr);
         setIsSubmitting(false);
         return;
+      }
+
+      if (data?.data?.poll?.slug) {
+        setSlug(data.data.poll.slug);
       }
 
       const updateMsg = "Inquiry successfully updated and saved to MongoDB.";
@@ -457,8 +479,9 @@ export default function EditPollPage({ params }: EditPollPageProps) {
           <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
             Edit Editorial Inquiry
           </h2>
-          <p className="text-xs text-zinc-400 mt-1">
-            Permanent Slug: <code className="text-zinc-300 font-mono">{slug}</code>
+          <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1.5">
+            <span>Public URL:</span>
+            <code className="text-zinc-300 font-mono">/polls/{slug}</code>
           </p>
         </div>
 
@@ -786,6 +809,44 @@ export default function EditPollPage({ params }: EditPollPageProps) {
             />
             {errors.title && (
               <p className="mt-1 text-xs text-rose-400">{errors.title}</p>
+            )}
+          </div>
+
+          {/* Editable URL Slug */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="edit-slug"
+                className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
+              >
+                Inquiry URL Slug (Editable)
+              </label>
+              <span className="text-[11px] text-zinc-400 font-mono">
+                /polls/{slug || "slug"}
+              </span>
+            </div>
+            <input
+              id="edit-slug"
+              type="text"
+              value={slug}
+              onChange={handleSlugChange}
+              onBlur={handleSlugBlur}
+              placeholder="e.g. artificial-intelligence-safety"
+              className={`w-full rounded-lg border bg-[#151824] px-3.5 py-2.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 ${
+                errors.slug
+                  ? "border-rose-500 focus:ring-rose-500"
+                  : "border-white/10 focus:border-rose-500 focus:ring-rose-500"
+              }`}
+            />
+            {errors.slug ? (
+              <p className="mt-1 text-xs text-rose-400 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                <span>{errors.slug}</span>
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-zinc-500">
+                You can edit this slug to customize the inquiry URL (/polls/{slug}).
+              </p>
             )}
           </div>
 

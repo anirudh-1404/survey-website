@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
 import { requireAdmin, verifyCsrfOrigin, createErrorResponse, createSuccessResponse } from "@/lib/auth";
-import { generateUniqueSlug } from "@/lib/polls";
+import { generateUniqueSlug, slugify } from "@/lib/polls";
 import { PollCategory } from "@/types/poll";
 import { submitUrlsForInstantIndexing } from "@/lib/indexing";
 import { absoluteUrl } from "@/lib/site-url";
@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
 
     const {
       title,
+      slug: customSlug,
       category,
       summary,
       context,
@@ -148,6 +149,14 @@ export async function POST(request: NextRequest) {
 
     if (!title || typeof title !== "string" || title.trim().length < 10) {
       errors.title = "Question/title must be at least 10 characters long";
+    }
+
+    let cleanCustomSlug: string | undefined = undefined;
+    if (customSlug && typeof customSlug === "string" && customSlug.trim()) {
+      cleanCustomSlug = slugify(customSlug);
+      if (cleanCustomSlug.length < 2) {
+        errors.slug = "URL slug must be at least 2 characters long";
+      }
     }
 
     if (!category || typeof category !== "string" || category.trim().length < 2) {
@@ -180,9 +189,22 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
-    // 3. Generate unique slug
+    // 3. Generate unique slug or validate custom slug
     const cleanTitle = (title as string).trim();
-    const slug = await generateUniqueSlug(cleanTitle);
+    let slug: string;
+
+    if (cleanCustomSlug) {
+      const existing = await PollModel.findOne({ slug: cleanCustomSlug }).lean();
+      if (existing) {
+        return createErrorResponse(
+          `A poll with the URL slug "${cleanCustomSlug}" already exists. Please choose a unique slug.`,
+          409
+        );
+      }
+      slug = cleanCustomSlug;
+    } else {
+      slug = await generateUniqueSlug(cleanTitle);
+    }
 
     // 4. Build options
     const seenOptionKeys = new Set<string>();

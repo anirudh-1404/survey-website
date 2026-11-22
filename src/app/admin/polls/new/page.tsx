@@ -18,12 +18,15 @@ import {
 import { PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
 import { PollImageUploader } from "@/components/admin/PollImageUploader";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { generateSlug } from "@/lib/blog-utils";
 import { toast } from "sonner";
 
 export default function CreatePollPage() {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [customSlugEdited, setCustomSlugEdited] = useState(false);
   const [categoryList, setCategoryList] = useState<string[]>([...DEFAULT_POLL_CATEGORIES]);
   const [category, setCategory] = useState<string>("Technology & AI");
   const [isCustomCategory, setIsCustomCategory] = useState(false);
@@ -79,6 +82,29 @@ export default function CreatePollPage() {
       { key: "yes", label: "Yes — In favor of the proposed measure" },
       { key: "no", label: "No — Opposed to the proposed measure" },
     ]);
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTitle(val);
+    if (!customSlugEdited) {
+      setSlug(generateSlug(val));
+    }
+    if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+      .toLowerCase()
+      .replace(/[^a-z0-9 -]/g, "")
+      .replace(/\s+/g, "-");
+    setSlug(raw);
+    setCustomSlugEdited(true);
+    if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
+  };
+
+  const handleSlugBlur = () => {
+    setSlug((prev) => generateSlug(prev));
   };
 
   const handleAddCustomCategory = () => {
@@ -167,6 +193,7 @@ export default function CreatePollPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
+          slug: slug.trim() ? generateSlug(slug) : undefined,
           category,
           summary: summary.trim(),
           context: context.trim() || undefined,
@@ -193,6 +220,9 @@ export default function CreatePollPage() {
           type: "error",
           message: pollErr,
         });
+        if (pollErr.toLowerCase().includes("slug")) {
+          setErrors((prev) => ({ ...prev, slug: pollErr }));
+        }
         toast.error(pollErr);
         setIsSubmitting(false);
         return;
@@ -300,10 +330,7 @@ export default function CreatePollPage() {
               id="poll-title"
               type="text"
               value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
-              }}
+              onChange={handleTitleChange}
               placeholder="e.g. Should international agreements mandate external safety audits for frontier AI?"
               className={`w-full rounded-lg border bg-[#151824] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 ${
                 errors.title
@@ -316,6 +343,44 @@ export default function CreatePollPage() {
               <p className="mt-1 text-xs text-rose-400 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
                 <span>{errors.title}</span>
+              </p>
+            )}
+          </div>
+
+          {/* URL Slug (Customizable & Editable) */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="poll-slug"
+                className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
+              >
+                Inquiry URL Slug (Editable)
+              </label>
+              <span className="text-[11px] text-zinc-400 font-mono">
+                /polls/{slug || "preview-slug"}
+              </span>
+            </div>
+            <input
+              id="poll-slug"
+              type="text"
+              value={slug}
+              onChange={handleSlugChange}
+              onBlur={handleSlugBlur}
+              placeholder="e.g. external-safety-audits-frontier-ai"
+              className={`w-full rounded-lg border bg-[#151824] px-3.5 py-2.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 ${
+                errors.slug
+                  ? "border-rose-500 focus:ring-rose-500"
+                  : "border-white/10 focus:border-rose-500 focus:ring-rose-500"
+              }`}
+            />
+            {errors.slug ? (
+              <p className="mt-1 text-xs text-rose-400 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                <span>{errors.slug}</span>
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-zinc-500">
+                Custom URL slug for this survey inquiry. Auto-generated from your question, or enter your own custom slug.
               </p>
             )}
           </div>
