@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { BlogModel, BlogStatus } from "@/models/Blog";
 import "@/models/User";
 import { BlogPost, BlogListResponse } from "@/types/blog";
+import mongoose from "mongoose";
 
 import {
   generateSlug,
@@ -55,6 +56,7 @@ export function mapBlogToUI(
     seoTitle: doc.seoTitle || undefined,
     seoDescription: doc.seoDescription || undefined,
     readingTimeMinutes: calculateReadingTime(doc.content),
+    views: typeof doc.views === "number" ? doc.views : 0,
   };
 }
 
@@ -124,4 +126,24 @@ export async function getPublishedBlogBySlug(
   }
 
   return mapBlogToUI(doc);
+}
+
+/**
+ * Increment view count for a published blog post asynchronously.
+ */
+export async function incrementBlogViews(
+  identifier: string | mongoose.Types.ObjectId
+): Promise<void> {
+  if (!identifier) return;
+  try {
+    await connectToDatabase();
+    const isObjectId = mongoose.Types.ObjectId.isValid(identifier);
+    const filter: Record<string, unknown> = isObjectId
+      ? { _id: new mongoose.Types.ObjectId(identifier), status: "published" }
+      : { slug: String(identifier).toLowerCase().trim(), status: "published" };
+
+    await BlogModel.updateOne(filter, { $inc: { views: 1 } });
+  } catch (err) {
+    console.error("[incrementBlogViews] Failed to record blog view:", err);
+  }
 }

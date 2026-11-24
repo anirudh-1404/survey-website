@@ -33,6 +33,7 @@ export default function AdminBlogsPage() {
     total: 0,
     published: 0,
     draft: 0,
+    views: 0,
   });
 
   const [feedback, setFeedback] = useState<{
@@ -322,6 +323,13 @@ export default function AdminBlogsPage() {
               </button>
             );
           })}
+
+          {/* Total Views Badge */}
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-mono text-zinc-300 ml-auto sm:ml-2">
+            <Eye className="h-3.5 w-3.5 text-rose-400" />
+            <span className="text-zinc-400 text-[11px]">Total Views:</span>
+            <strong className="text-white font-semibold">{(counts.views || 0).toLocaleString()}</strong>
+          </span>
         </div>
 
         {/* Search Input */}
@@ -383,6 +391,9 @@ export default function AdminBlogsPage() {
                   </th>
                   <th scope="col" className="px-5 py-3.5">
                     Status
+                  </th>
+                  <th scope="col" className="px-5 py-3.5">
+                    Views
                   </th>
                   <th scope="col" className="px-5 py-3.5">
                     Dates
@@ -456,6 +467,14 @@ export default function AdminBlogsPage() {
                             }`}
                           />
                           <span>{blog.status}</span>
+                        </span>
+                      </td>
+
+                      {/* Views */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 rounded bg-white/5 px-2.5 py-1 font-mono text-xs text-zinc-300 border border-white/5">
+                          <Eye className="h-3.5 w-3.5 text-rose-400" />
+                          <span>{(blog.views || 0).toLocaleString()}</span>
                         </span>
                       </td>
 

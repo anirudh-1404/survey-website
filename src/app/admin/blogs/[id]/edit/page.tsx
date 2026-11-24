@@ -49,6 +49,7 @@ export default function AdminEditBlogPage({ params }: EditBlogPageProps) {
   const [category, setCategory] = useState("Analysis");
   const [tagsInput, setTagsInput] = useState("");
   const [status, setStatus] = useState<BlogStatus>("draft");
+  const [views, setViews] = useState(0);
 
   // Featured Image
   const [imageUrl, setImageUrl] = useState("");
@@ -81,6 +82,7 @@ export default function AdminEditBlogPage({ params }: EditBlogPageProps) {
             setCategory(blog.category || "Analysis");
             setTagsInput((blog.tags || []).join(", "));
             setStatus(blog.status);
+            setViews(blog.views || 0);
             setImageUrl(blog.imageUrl || "");
             setCloudinaryPublicId(blog.cloudinaryPublicId || "");
             setImageAlt(blog.imageAlt || "");
@@ -214,6 +216,10 @@ export default function AdminEditBlogPage({ params }: EditBlogPageProps) {
               }`}
             >
               {status}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-mono text-zinc-300">
+              <Eye className="h-3 w-3 text-rose-400" />
+              <span>{(views || 0).toLocaleString()} views</span>
             </span>
           </div>
         </div>

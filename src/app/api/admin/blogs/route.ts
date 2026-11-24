@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [totalMatching, rawDocs, totalAll, totalPublished, totalDraft] =
+    const [totalMatching, rawDocs, totalAll, totalPublished, totalDraft, totalViewsAgg] =
       await Promise.all([
         BlogModel.countDocuments(filter),
         BlogModel.find(filter)
@@ -56,10 +56,14 @@ export async function GET(request: NextRequest) {
         BlogModel.countDocuments({}),
         BlogModel.countDocuments({ status: "published" }),
         BlogModel.countDocuments({ status: "draft" }),
+        BlogModel.aggregate([
+          { $group: { _id: null, totalViews: { $sum: "$views" } } },
+        ]),
       ]);
 
     const blogs = rawDocs.map(mapBlogToUI);
     const totalPages = Math.max(1, Math.ceil(totalMatching / limit));
+    const totalViews = totalViewsAgg[0]?.totalViews || 0;
 
     return createSuccessResponse({
       blogs,
@@ -70,6 +74,7 @@ export async function GET(request: NextRequest) {
         total: totalAll,
         published: totalPublished,
         draft: totalDraft,
+        views: totalViews,
       },
     });
   } catch (error) {

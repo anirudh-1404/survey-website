@@ -25,6 +25,7 @@ export interface BlogPost {
   seoTitle?: string;
   seoDescription?: string;
   readingTimeMinutes?: number;
+  views?: number;
 }
 
 export interface BlogListResponse {
@@ -36,5 +37,6 @@ export interface BlogListResponse {
     total: number;
     published: number;
     draft: number;
+    views?: number;
   };
 }

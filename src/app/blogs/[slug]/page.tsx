@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { BlogViewTracker } from "@/components/blogs/BlogViewTracker";
 import { getPublishedBlogBySlug, getPublishedBlogs, sanitizeRichTextHtml } from "@/lib/blogs";
 import {
   ArrowLeft,
@@ -127,6 +128,7 @@ export default async function BlogPostDetailPage({ params }: BlogPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <BlogViewTracker slug={blog.slug} />
       <Navbar />
 
       <main className="flex-1 pb-20">

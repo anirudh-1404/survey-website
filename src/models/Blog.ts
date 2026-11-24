@@ -16,6 +16,7 @@ export interface IBlog extends Document {
   tags: string[];
   status: BlogStatus;
   publishedAt?: Date | null;
+  views: number;
   seoTitle?: string;
   seoDescription?: string;
   createdAt: Date;
@@ -99,6 +100,11 @@ const BlogSchema = new Schema<IBlog>(
       type: Date,
       default: null,
       index: true,
+    },
+    views: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     seoTitle: {
       type: String,

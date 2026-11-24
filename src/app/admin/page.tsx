@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel } from "@/models/Poll";
+import { BlogModel } from "@/models/Blog";
 import { User } from "@/models/User";
 import { VoteModel } from "@/models/Vote";
 import { ContactSubmissionModel } from "@/models/ContactSubmission";
@@ -38,6 +39,7 @@ export default async function AdminOverviewPage() {
     unreadContactSubmissions,
     siteAnalytics,
     pollViewsAgg,
+    blogViewsAgg,
     recentPolls,
     recentVisits,
   ] = await Promise.all([
@@ -53,6 +55,9 @@ export default async function AdminOverviewPage() {
     PollModel.aggregate([
       { $group: { _id: null, totalViews: { $sum: "$views" } } },
     ]),
+    BlogModel.aggregate([
+      { $group: { _id: null, totalViews: { $sum: "$views" } } },
+    ]),
     PollModel.find()
       .sort({ createdAt: -1 })
       .limit(50)
@@ -65,6 +70,7 @@ export default async function AdminOverviewPage() {
   const recentVotesMap = await getBatchPollVoteResults(recentPollIds);
 
   const totalPollViews = pollViewsAgg[0]?.totalViews || 0;
+  const totalBlogViews = blogViewsAgg[0]?.totalViews || 0;
 
   return (
     <div className="space-y-8">
@@ -134,6 +140,21 @@ export default async function AdminOverviewPage() {
           <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
             <span>Across surveys</span>
             <span className="text-[10px] text-rose-400 font-medium">Views</span>
+          </div>
+        </div>
+
+        {/* Total Blog Views */}
+        <div className="rounded-xl border border-white/10 bg-[#10121a] p-5 space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Blog Views</span>
+            <Eye className="h-4 w-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-white font-mono">
+            {totalBlogViews.toLocaleString()}
+          </p>
+          <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-white/5">
+            <span>Across articles</span>
+            <span className="text-[10px] text-emerald-400 font-medium">Readership</span>
           </div>
         </div>
 
