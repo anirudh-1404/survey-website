@@ -273,7 +273,7 @@ export default async function BlogsIndexPage({ searchParams }: BlogsPageProps) {
 
                       <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs">
                         <span className="text-[11px] text-zinc-500">
-                          By {blog.author.name}
+                          {blog.readingTimeMinutes || 3} min read
                         </span>
                         <Link
                           href={`/blogs/${blog.slug}`}

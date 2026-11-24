@@ -10,7 +10,6 @@ import {
   Calendar,
   Clock,
   Tag,
-  ShieldCheck,
   ChevronRight,
   BookOpen,
 } from "lucide-react";
@@ -58,7 +57,7 @@ export async function generateMetadata({
       siteName: "SayNow",
       type: "article",
       publishedTime: blog.publishedAt || blog.createdAt,
-      authors: [blog.author.name],
+      authors: ["SayNow Editorial Staff"],
       ...(blog.imageUrl
         ? {
             images: [
@@ -111,8 +110,8 @@ export default async function BlogPostDetailPage({ params }: BlogPageProps) {
     dateModified: blog.updatedAt || blog.createdAt,
     image: blog.imageUrl ? [blog.imageUrl] : undefined,
     author: {
-      "@type": "Person",
-      name: blog.author.name,
+      "@type": "Organization",
+      name: "SayNow Editorial Staff",
     },
     publisher: {
       "@type": "Organization",
@@ -189,33 +188,6 @@ export default async function BlogPostDetailPage({ params }: BlogPageProps) {
           <p className="text-lg leading-relaxed text-zinc-300 sm:text-xl font-serif italic border-l-2 border-rose-500 pl-4 py-1">
             {blog.excerpt}
           </p>
-
-          {/* Author Byline */}
-          <div className="flex items-center justify-between border-y border-white/10 py-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-600/20 border border-rose-500/40 font-bold text-rose-300 text-sm">
-                {blog.author.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-              <div>
-                <div className="text-sm font-bold text-white">
-                  {blog.author.name}
-                </div>
-                <div className="text-[11px] text-zinc-400">
-                  PULSE Editorial Fellow & Research Contributor
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <span className="hidden sm:inline">Peer Reviewed</span>
-            </div>
-          </div>
 
           {/* Optional Featured Image */}
           {blog.imageUrl && (
