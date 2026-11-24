@@ -4,8 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PollCard } from "@/components/polls/PollCard";
 import { getPublishedPolls } from "@/lib/polls";
-import { Poll, PollCategory, DEFAULT_POLL_CATEGORIES } from "@/types/poll";
-import { PollModel } from "@/models/Poll";
+import { Poll } from "@/types/poll";
 import { Layers, BarChart3, HelpCircle } from "lucide-react";
 import { absoluteUrl } from "@/lib/site-url";
 
@@ -38,24 +37,16 @@ export default async function PollsListingPage({ searchParams }: PollsPageProps)
   const selectedStatus = statusParam || "All";
 
   let polls: Poll[] = [];
-  let categoryFilters: string[] = ["All", ...DEFAULT_POLL_CATEGORIES.slice(0, 6)];
 
   try {
-    const [dbPolls, distinctCategories] = await Promise.all([
-      getPublishedPolls({
-        category: selectedCategory !== "All" ? selectedCategory : undefined,
-        limit: 50,
-      }),
-      PollModel.distinct("category", { status: "published" }).catch(() => []),
-    ]);
+    const dbPolls = await getPublishedPolls({
+      category: selectedCategory !== "All" ? selectedCategory : undefined,
+      limit: 50,
+    });
 
     if (dbPolls && dbPolls.length > 0) {
       polls = dbPolls;
     }
-
-    categoryFilters = Array.from(
-      new Set(["All", ...DEFAULT_POLL_CATEGORIES.slice(0, 6), ...distinctCategories])
-    );
   } catch {
     polls = [];
   }
@@ -88,36 +79,6 @@ export default async function PollsListingPage({ searchParams }: PollsPageProps)
                 Evidence-backed civic surveys tracking community sentiment on emerging technologies,
                 economic policy, and pivotal global developments.
               </p>
-            </div>
-
-            {/* Category Filter Navigation */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-              {categoryFilters.map((cat) => {
-                const isActive = selectedCategory === cat;
-                return (
-                  <Link
-                    key={cat}
-                    href={
-                      cat === "All"
-                        ? selectedStatus !== "All"
-                          ? `/polls?status=${encodeURIComponent(selectedStatus)}`
-                          : "/polls"
-                        : `/polls?category=${encodeURIComponent(cat)}${
-                            selectedStatus !== "All"
-                              ? `&status=${encodeURIComponent(selectedStatus)}`
-                              : ""
-                          }`
-                    }
-                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                      isActive
-                        ? "bg-rose-600 text-white shadow-md shadow-rose-900/30 ring-1 ring-rose-400"
-                        : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {cat}
-                  </Link>
-                );
-              })}
             </div>
           </div>
         </header>
