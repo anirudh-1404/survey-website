@@ -97,6 +97,11 @@ export default function RootLayout({
           name="google-site-verification"
           content="JH-bwIEmWDLC_gWX9_rKyU5DTzSJjLf2ftQoVeewtsM"
         />
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6069508290921658"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="min-h-full flex flex-col bg-[#090a0f] text-[#f4f4f7] selection:bg-rose-900 selection:text-white">
         <SiteVisitorTracker />
