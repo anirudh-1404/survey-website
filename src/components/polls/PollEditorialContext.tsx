@@ -10,7 +10,7 @@ import {
   Compass,
   FileCheck,
 } from "lucide-react";
-import { sanitizeRichTextHtml, calculateReadingTime } from "@/lib/blog-utils";
+import { renderEditorialHtml, calculateReadingTime } from "@/lib/blog-utils";
 
 interface PollEditorialContextProps {
   context: string;
@@ -78,58 +78,6 @@ function parseCitations(raw?: string): ParsedCitation[] {
   });
 }
 
-/**
- * Format plain text into readable paragraphs if not containing HTML.
- * Converts markdown **bold** and *italic* safely, and splits dense single-wall text into paragraphs.
- */
-function formatPlainTextToHtml(raw: string): string {
-  // If already contains HTML markup from the rich text editor, return as-is for sanitization
-  if (/<[a-z][\s\S]*>/i.test(raw)) {
-    return raw;
-  }
-
-  // 1. If text has explicit double newlines, split by paragraphs
-  if (raw.includes("\n\n")) {
-    return raw
-      .split(/\n\n+/)
-      .map((para) => `<p>${convertMarkdownSpans(para.trim())}</p>`)
-      .join("\n");
-  }
-
-  // 2. If single newlines exist, break by lines
-  if (raw.includes("\n")) {
-    return raw
-      .split(/\n+/)
-      .map((para) => `<p>${convertMarkdownSpans(para.trim())}</p>`)
-      .join("\n");
-  }
-
-  // 3. If it's a large unbroken block of text (> 90 words), split by sentences into 2-3 sentence paragraphs
-  const sentences = raw.match(/[^.!?]+[.!?]+(?:\s|$)/g);
-  if (sentences && sentences.length >= 4) {
-    const paragraphs: string[] = [];
-    const chunkSize = sentences.length > 6 ? 3 : 2;
-
-    for (let i = 0; i < sentences.length; i += chunkSize) {
-      const slice = sentences.slice(i, i + chunkSize).join(" ").trim();
-      if (slice) {
-        paragraphs.push(`<p>${convertMarkdownSpans(slice)}</p>`);
-      }
-    }
-    return paragraphs.join("\n");
-  }
-
-  return `<p>${convertMarkdownSpans(raw.trim())}</p>`;
-}
-
-function convertMarkdownSpans(text: string): string {
-  return text
-    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/__([^_]+)__/g, "<strong>$1</strong>")
-    .replace(/(^|[^*])\*([^*]+)\*([^*]|$)/g, "$1<em>$2</em>$3")
-    .replace(/(^|[^_])_([^_]+)_([^_]|$)/g, "$1<em>$2</em>$3");
-}
-
 export function PollEditorialContext({
   context,
   sourceReference,
@@ -138,10 +86,10 @@ export function PollEditorialContext({
 }: PollEditorialContextProps) {
   const readingTime = useMemo(() => calculateReadingTime(context), [context]);
 
-  const sanitizedContent = useMemo(() => {
-    const prepared = formatPlainTextToHtml(context);
-    return sanitizeRichTextHtml(prepared);
-  }, [context]);
+  const sanitizedContent = useMemo(
+    () => renderEditorialHtml(context),
+    [context]
+  );
 
   const citations = useMemo(
     () => parseCitations(sourceReference),

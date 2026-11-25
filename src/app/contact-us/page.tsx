@@ -6,14 +6,14 @@ import { Shield, MessageSquareText } from "lucide-react";
 import { absoluteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: "Contact Us — SayNow",
+  title: "Contact Us",
   description:
     "Direct communication channel for editorial inquiries, empirical research feedback, and public survey proposals.",
   alternates: {
     canonical: absoluteUrl("/contact-us"),
   },
   openGraph: {
-    title: "Contact Us — SayNow",
+    title: "Contact Us | SayNow",
     description:
       "Direct communication channel for editorial inquiries, empirical research feedback, and public survey proposals.",
     url: absoluteUrl("/contact-us"),

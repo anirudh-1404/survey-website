@@ -15,14 +15,14 @@ interface PollsPageProps {
 export const instant = false;
 
 export const metadata: Metadata = {
-  title: "Public Opinion Polls Archive — SayNow",
+  title: "Public Opinion Polls Archive",
   description:
     "Explore all open and concluded public opinion inquiries on pivotal technologies, socioeconomic policy, and global discourse.",
   alternates: {
     canonical: absoluteUrl("/polls"),
   },
   openGraph: {
-    title: "Public Opinion Polls Archive — SayNow",
+    title: "Public Opinion Polls Archive | SayNow",
     description:
       "Explore all open and concluded public opinion inquiries on pivotal technologies, socioeconomic policy, and global discourse.",
     url: absoluteUrl("/polls"),

@@ -31,7 +31,7 @@ export async function generateMetadata({
 
   if (!poll || poll.status === "Draft") {
     return {
-      title: "Survey Not Found — SayNow",
+      title: "Survey Not Found",
       description: "The requested news poll inquiry could not be found.",
       robots: {
         index: false,
@@ -40,10 +40,14 @@ export async function generateMetadata({
     };
   }
 
-  const siteUrl = getSiteUrl();
   const canonicalUrl = absoluteUrl(`/polls/${poll.id}`);
 
-  const pageTitle = poll.metaTitle || `${poll.title} — SayNow Public Opinion Survey`;
+  const rawTitle = poll.metaTitle?.trim() || `${poll.title} — Public Opinion Survey`;
+  const baseTitle =
+    rawTitle
+      .replace(/(?:\s*[|—–-]\s*SayNow(?:\s+Public\s+Opinion\s+Survey)?)+$/i, "")
+      .trim() || poll.title;
+  const fullTitle = `${baseTitle} | SayNow`;
   const pageDescription = poll.metaDescription || poll.summary;
   const keywords =
     Array.isArray(poll.seoKeywords) && poll.seoKeywords.length > 0
@@ -51,14 +55,14 @@ export async function generateMetadata({
       : [poll.category, "Public Opinion Poll", "Civic Survey", "India Poll"];
 
   return {
-    title: pageTitle,
+    title: baseTitle,
     description: pageDescription,
     keywords,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: pageTitle,
+      title: fullTitle,
       description: pageDescription,
       url: canonicalUrl,
       siteName: "SayNow",
@@ -68,7 +72,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: pageTitle,
+      title: fullTitle,
       description: pageDescription,
       ...(poll.imageUrl ? { images: [poll.imageUrl] } : {}),
     },

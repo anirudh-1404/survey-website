@@ -19,7 +19,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { sanitizeRichTextHtml } from "@/lib/blog-utils";
+import { renderEditorialHtml } from "@/lib/blog-utils";
 
 interface RichTextEditorProps {
   value: string;
@@ -157,7 +157,7 @@ export function RichTextEditor({
     setShowImageModal(false);
   };
 
-  const sanitizedHtml = sanitizeRichTextHtml(value);
+  const sanitizedHtml = renderEditorialHtml(value);
 
   return (
     <div className="rounded-xl border border-white/10 bg-[#0d0f17] overflow-hidden shadow-lg">

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { BlogViewTracker } from "@/components/blogs/BlogViewTracker";
-import { getPublishedBlogBySlug, getPublishedBlogs, sanitizeRichTextHtml } from "@/lib/blogs";
+import { getPublishedBlogBySlug, getPublishedBlogs, renderEditorialHtml } from "@/lib/blogs";
 import {
   ArrowLeft,
   Calendar,
@@ -30,7 +30,7 @@ export async function generateMetadata({
 
   if (!blog || blog.status !== "published") {
     return {
-      title: "Article Not Found — SayNow Journal",
+      title: "Article Not Found",
       description: "The requested editorial dispatch could not be found.",
       robots: {
         index: false,
@@ -39,19 +39,22 @@ export async function generateMetadata({
     };
   }
 
-  const siteUrl = getSiteUrl();
   const canonicalUrl = absoluteUrl(`/blogs/${blog.slug}`);
-  const title = blog.seoTitle || `${blog.title} — SayNow Journal`;
+  const rawTitle = blog.seoTitle?.trim() || `${blog.title} — Journal`;
+  const baseTitle =
+    rawTitle.replace(/(?:\s*[|—–-]\s*SayNow(?:\s+Journal)?)+$/i, "").trim() ||
+    blog.title;
+  const fullTitle = `${baseTitle} | SayNow`;
   const description = blog.seoDescription || blog.excerpt;
 
   return {
-    title,
+    title: baseTitle,
     description,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title,
+      title: fullTitle,
       description,
       url: canonicalUrl,
       siteName: "SayNow",
@@ -71,7 +74,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: fullTitle,
       description,
       ...(blog.imageUrl ? { images: [blog.imageUrl] } : {}),
     },
@@ -88,7 +91,7 @@ export default async function BlogPostDetailPage({ params }: BlogPageProps) {
     notFound();
   }
 
-  const sanitizedContent = sanitizeRichTextHtml(blog.content);
+  const sanitizedContent = renderEditorialHtml(blog.content);
 
   // Fetch 3 related published articles from the same category or general feed
   const relatedResponse = await getPublishedBlogs({

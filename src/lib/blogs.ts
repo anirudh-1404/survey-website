@@ -8,12 +8,14 @@ import {
   generateSlug,
   calculateReadingTime,
   sanitizeRichTextHtml,
+  renderEditorialHtml,
 } from "./blog-utils";
 
 export {
   generateSlug,
   calculateReadingTime,
   sanitizeRichTextHtml,
+  renderEditorialHtml,
 };
 
 /**

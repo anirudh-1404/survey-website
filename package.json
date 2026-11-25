@@ -10,15 +10,19 @@
     "test": "node --env-file=.env.local --test --test-concurrency=1 tests/auth.test.mjs tests/poll-management.test.mjs tests/voting.test.mjs tests/discussion.test.mjs tests/qa-security-seo.test.mjs tests/poll-images.test.mjs tests/poll-chat.test.mjs tests/contact.test.mjs tests/blogs.test.mjs tests/public-ia.test.mjs tests/integration-consistency.test.mjs tests/cleanup-profile-poll-redesign.test.mjs tests/comment-likes.test.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
     "lucide-react": "^1.59.0",
+    "mcp-handler": "^2.4.0",
+    "mongodb": "^7.9.1",
     "mongoose": "^9.11.2",
     "next": "16.4.2",
     "nodemailer": "^10.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "sonner": "^2.0.8"
+    "sonner": "^2.0.8",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.5",
