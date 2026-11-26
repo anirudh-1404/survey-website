@@ -12,6 +12,7 @@ import {
   Tag,
   ChevronRight,
   BookOpen,
+  Image as ImageIcon,
 } from "lucide-react";
 import { connection } from "next/server";
 import { getSiteUrl, absoluteUrl } from "@/lib/site-url";
@@ -260,29 +261,53 @@ export default async function BlogPostDetailPage({ params }: BlogPageProps) {
               {relatedArticles.map((rel) => (
                 <article
                   key={rel.id}
-                  className="group rounded-xl border border-white/10 bg-[#0d0f17] p-5 flex flex-col justify-between space-y-4 hover:border-white/20 transition-colors"
+                  className="group flex flex-col justify-between rounded-xl border border-white/10 bg-[#0d0f17] overflow-hidden hover:border-white/20 transition-all duration-200"
                 >
-                  <div className="space-y-2">
-                    <span className="rounded bg-rose-950/40 px-2 py-0.5 text-[10px] font-semibold text-rose-300 uppercase tracking-wider border border-rose-900/40">
-                      {rel.category}
-                    </span>
-                    <h3 className="text-sm font-bold text-white group-hover:text-rose-400 transition-colors line-clamp-2">
-                      <Link href={`/blogs/${rel.slug}`}>{rel.title}</Link>
-                    </h3>
-                    <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                      {rel.excerpt}
-                    </p>
-                  </div>
+                  {/* Article Cover Image */}
+                  <Link
+                    href={`/blogs/${rel.slug}`}
+                    className="relative aspect-[16/9] w-full overflow-hidden bg-[#07080c] block"
+                  >
+                    {rel.imageUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={rel.imageUrl}
+                        alt={rel.imageAlt || rel.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-white/[0.02]">
+                        <ImageIcon className="h-8 w-8 text-zinc-700" />
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span className="rounded bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-300 border border-white/10">
+                        {rel.category}
+                      </span>
+                    </div>
+                  </Link>
 
-                  <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
-                    <span>{rel.readingTimeMinutes || 3} min read</span>
-                    <Link
-                      href={`/blogs/${rel.slug}`}
-                      className="text-rose-400 hover:text-rose-300 font-semibold inline-flex items-center gap-1"
-                    >
-                      <span>Read</span>
-                      <ChevronRight className="h-3 w-3" />
-                    </Link>
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-bold text-white group-hover:text-rose-400 transition-colors line-clamp-2">
+                        <Link href={`/blogs/${rel.slug}`}>{rel.title}</Link>
+                      </h3>
+                      <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                        {rel.excerpt}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
+                      <span>{rel.readingTimeMinutes || 3} min read</span>
+                      <Link
+                        href={`/blogs/${rel.slug}`}
+                        className="text-rose-400 hover:text-rose-300 font-semibold inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                      >
+                        <span>Read</span>
+                        <ChevronRight className="h-3 w-3" />
+                      </Link>
+                    </div>
                   </div>
                 </article>
               ))}
