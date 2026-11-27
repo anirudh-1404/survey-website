@@ -17,17 +17,17 @@ export function Hero() {
         <div className="mx-auto max-w-4xl text-center">
           {/* Primary headline */}
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1]">
-            Public opinion on the issues{" "}
+            Vote on trending polls. Read in-depth blogs.{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
-              shaping our world.
+              Debate in live chat.
             </span>
           </h1>
 
           {/* Supporting description */}
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-300 sm:text-lg sm:leading-8">
-            Cast your vote on timely news-driven debates, explore verified
-            community sentiment in real time, and join evidence-backed discussions
-            on the global challenges of today.
+            Cast your vote on critical news-driven polls, explore investigative
+            editorial analyses, and join real-time live chats to debate the issues
+            shaping our world.
           </p>
 
           {/* Call to actions */}

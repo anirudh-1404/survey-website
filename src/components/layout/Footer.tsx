@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, FileText, Info, Scale } from "lucide-react";
+import { FileText, Info } from "lucide-react";
 import { SayNowLogo } from "@/components/layout/SayNowLogo";
 
 export function Footer() {
@@ -17,17 +17,6 @@ export function Footer() {
               sentiment on pivotal global developments, emerging technologies, and
               socioeconomic policy debates.
             </p>
-            <div className="flex items-center gap-3 pt-2 text-xs text-zinc-400">
-              <span className="inline-flex items-center gap-1">
-                <Shield className="h-3.5 w-3.5 text-rose-500" />
-                Bot-resistant verification
-              </span>
-              <span>•</span>
-              <span className="inline-flex items-center gap-1">
-                <Scale className="h-3.5 w-3.5 text-zinc-400" />
-                Unfiltered aggregation
-              </span>
-            </div>
           </div>
 
           {/* Platform Links */}
@@ -93,15 +82,6 @@ export function Footer() {
                 >
                   <FileText className="h-3.5 w-3.5 text-zinc-400" />
                   Editorial Inquiries
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact-us"
-                  className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors"
-                >
-                  <Shield className="h-3.5 w-3.5 text-zinc-400" />
-                  Data Privacy
                 </Link>
               </li>
             </ul>
