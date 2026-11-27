@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { BlogModel, BlogStatus } from "@/models/Blog";
 import "@/models/User";
 import { BlogPost, BlogListResponse } from "@/types/blog";
+import { HINDI_REGEX_STR, PUNJABI_REGEX_STR, INDIC_REGEX_STR } from "@/lib/language";
 import mongoose from "mongoose";
 
 import {
@@ -70,6 +71,7 @@ export async function getPublishedBlogs(options?: {
   page?: number;
   limit?: number;
   category?: string;
+  lang?: string;
 }): Promise<BlogListResponse> {
   await connectToDatabase();
 
@@ -84,6 +86,16 @@ export async function getPublishedBlogs(options?: {
 
   if (options?.category && options.category !== "All") {
     query.category = options.category;
+  }
+
+  if (options?.lang && options.lang !== "all") {
+    if (options.lang === "pa") {
+      query.title = { $regex: PUNJABI_REGEX_STR };
+    } else if (options.lang === "hi") {
+      query.title = { $regex: HINDI_REGEX_STR };
+    } else if (options.lang === "en") {
+      query.title = { $not: { $regex: INDIC_REGEX_STR } };
+    }
   }
 
   const [totalCount, docs] = await Promise.all([

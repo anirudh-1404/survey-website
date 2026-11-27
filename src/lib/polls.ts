@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { PollModel, IPoll } from "@/models/Poll";
 import { Poll, PollStatus } from "@/types/poll";
+import { HINDI_REGEX_STR, PUNJABI_REGEX_STR, INDIC_REGEX_STR } from "@/lib/language";
 import {
   PollVoteResults,
   getPollVoteResults,
@@ -141,6 +142,7 @@ export function mapPollToUI(
 export async function getPublishedPolls(options?: {
   category?: string;
   limit?: number;
+  lang?: string;
 }): Promise<Poll[]> {
   await connectToDatabase();
 
@@ -152,7 +154,17 @@ export async function getPublishedPolls(options?: {
     filter.category = options.category;
   }
 
-  const limit = Math.min(options?.limit || 20, 50);
+  if (options?.lang && options.lang !== "all") {
+    if (options.lang === "pa") {
+      filter.title = { $regex: PUNJABI_REGEX_STR };
+    } else if (options.lang === "hi") {
+      filter.title = { $regex: HINDI_REGEX_STR };
+    } else if (options.lang === "en") {
+      filter.title = { $not: { $regex: INDIC_REGEX_STR } };
+    }
+  }
+
+  const limit = Math.min(options?.limit || 50, 100);
 
   const docs = await PollModel.find(filter)
     .sort({ featured: -1, publishedAt: -1, createdAt: -1 })
