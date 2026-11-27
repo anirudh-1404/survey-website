@@ -88,12 +88,22 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-12 flex flex-col items-center justify-between border-t border-white/10 pt-6 text-xs text-zinc-400 sm:flex-row">
-          <p>© {currentYear} SayNow. All rights reserved.</p>
-          <p className="mt-2 text-zinc-400 sm:mt-0">
-            Empirical Public Opinion Platform • Verified Civic Sentiment
+        {/* Bottom Bar & Disclaimer */}
+        <div className="mt-12 border-t border-white/10 pt-8 space-y-4">
+          <p className="text-[11px] leading-relaxed text-zinc-400 max-w-4xl">
+            <span className="font-semibold text-zinc-300">Disclaimer:</span> Opinions
+            and votes expressed across polls, community chats, and user discussions
+            represent individual citizen viewpoints and do not reflect the official
+            stance of SayNow. Editorial content is published for informational and civic
+            discourse purposes only.
           </p>
+
+          <div className="flex flex-col items-center justify-between pt-4 border-t border-white/5 text-xs text-zinc-400 sm:flex-row gap-2">
+            <p>© {currentYear} SayNow. All rights reserved.</p>
+            <p className="text-zinc-400">
+              Empirical Public Opinion Platform • Verified Civic Sentiment
+            </p>
+          </div>
         </div>
       </div>
     </footer>
